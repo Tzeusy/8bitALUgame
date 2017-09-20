@@ -1,0 +1,19 @@
+module evaluation (
+    input clk,  // clock
+    input rst,  // reset_conditionert
+    input a,                //input 1
+    input b,                //input 2
+    input c,                //carryin    
+    output fpgasum,
+    output fpgacarry
+  ) {
+
+  var temp;
+  always {
+    fpgasum = 8hFF;
+    fpgacarry = 8hFF;
+    temp = a^b;
+    fpgasum = temp^c;
+    fpgacarry = (c&temp)|(a&b);
+  }
+}

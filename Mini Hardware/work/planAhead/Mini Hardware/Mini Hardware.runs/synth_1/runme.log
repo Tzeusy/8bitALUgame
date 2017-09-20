@@ -1,0 +1,157 @@
+
+*** Running xst
+    with args -ifn "mojo_top_0.xst" -ofn "mojo_top_0.srp" -intstyle ise
+
+Reading design: mojo_top_0.prj
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Analyzing Verilog file "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/reset_conditioner_1.v" into library work
+Parsing module <reset_conditioner_1>.
+Analyzing Verilog file "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v" into library work
+Parsing module <evaluation_2>.
+Analyzing Verilog file "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/mojo_top_0.v" into library work
+Parsing module <mojo_top_0>.
+
+=========================================================================
+*                            HDL Elaboration                            *
+=========================================================================
+
+Elaborating module <mojo_top_0>.
+
+Elaborating module <reset_conditioner_1>.
+
+Elaborating module <evaluation_2>.
+WARNING:HDLCompiler:413 - "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v" Line 22: Result of 8-bit expression is truncated to fit in 1-bit target.
+WARNING:HDLCompiler:413 - "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v" Line 23: Result of 8-bit expression is truncated to fit in 1-bit target.
+WARNING:HDLCompiler:413 - "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v" Line 25: Result of 32-bit expression is truncated to fit in 1-bit target.
+WARNING:HDLCompiler:413 - "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v" Line 26: Result of 32-bit expression is truncated to fit in 1-bit target.
+
+=========================================================================
+*                           HDL Synthesis                               *
+=========================================================================
+
+Synthesizing Unit <mojo_top_0>.
+    Related source file is "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/mojo_top_0.v".
+WARNING:Xst:647 - Input <cclk> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <spi_ss> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <spi_mosi> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <spi_sck> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <avr_tx> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <avr_rx_busy> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 1-bit tristate buffer for signal <spi_miso> created at line 53
+    Found 1-bit tristate buffer for signal <spi_channel<3>> created at line 53
+    Found 1-bit tristate buffer for signal <spi_channel<2>> created at line 53
+    Found 1-bit tristate buffer for signal <spi_channel<1>> created at line 53
+    Found 1-bit tristate buffer for signal <spi_channel<0>> created at line 53
+    Found 1-bit tristate buffer for signal <avr_rx> created at line 53
+    Found 1-bit comparator equal for signal <M_evaluater_fpgasum[0]_out1_equal_1_o> created at line 66
+    Found 1-bit comparator equal for signal <M_evaluater_fpgacarry[0]_out2_equal_2_o> created at line 66
+    Summary:
+	inferred   2 Comparator(s).
+	inferred   6 Tristate(s).
+Unit <mojo_top_0> synthesized.
+
+Synthesizing Unit <reset_conditioner_1>.
+    Related source file is "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/reset_conditioner_1.v".
+    Found 4-bit register for signal <M_stage_q>.
+    Summary:
+	inferred   4 D-type flip-flop(s).
+Unit <reset_conditioner_1> synthesized.
+
+Synthesizing Unit <evaluation_2>.
+    Related source file is "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead/Mini Hardware/Mini Hardware.srcs/sources_1/imports/verilog/evaluation_2.v".
+WARNING:Xst:647 - Input <clk> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <rst> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Summary:
+Unit <evaluation_2> synthesized.
+
+=========================================================================
+HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 1
+ 4-bit register                                        : 1
+# Comparators                                          : 2
+ 1-bit comparator equal                                : 2
+# Tristates                                            : 6
+ 1-bit tristate buffer                                 : 6
+# Xors                                                 : 2
+ 32-bit xor2                                           : 2
+
+=========================================================================
+
+=========================================================================
+*                       Advanced HDL Synthesis                          *
+=========================================================================
+
+
+=========================================================================
+Advanced HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 4
+ Flip-Flops                                            : 4
+# Comparators                                          : 2
+ 1-bit comparator equal                                : 2
+# Xors                                                 : 2
+ 32-bit xor2                                           : 2
+
+=========================================================================
+
+=========================================================================
+*                         Low Level Synthesis                           *
+=========================================================================
+WARNING:Xst:2677 - Node <reset_cond/M_stage_q_3> of sequential type is unconnected in block <mojo_top_0>.
+WARNING:Xst:2677 - Node <reset_cond/M_stage_q_2> of sequential type is unconnected in block <mojo_top_0>.
+WARNING:Xst:2677 - Node <reset_cond/M_stage_q_1> of sequential type is unconnected in block <mojo_top_0>.
+WARNING:Xst:2677 - Node <reset_cond/M_stage_q_0> of sequential type is unconnected in block <mojo_top_0>.
+
+Optimizing unit <mojo_top_0> ...
+
+Mapping all equations...
+Building and optimizing final netlist ...
+Found area constraint ratio of 100 (+ 0) on block mojo_top_0, actual ratio is 0.
+
+Final Macro Processing ...
+
+=========================================================================
+Final Register Report
+
+Found no macro
+=========================================================================
+
+=========================================================================
+*                           Partition Report                            *
+=========================================================================
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+=========================================================================
+*                            Design Summary                             *
+=========================================================================
+
+Clock Information:
+------------------
+No clock signals found in this design
+
+Asynchronous Control Signals Information:
+----------------------------------------
+No asynchronous control signals found in this design
+
+Timing Summary:
+---------------
+Speed Grade: -2
+
+   Minimum period: No path found
+   Minimum input arrival time before clock: No path found
+   Maximum output required time after clock: No path found
+   Maximum combinational path delay: 6.331ns
+
+=========================================================================
