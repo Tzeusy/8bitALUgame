@@ -2,10 +2,10 @@
 <project name="Mini Hardware" board="Mojo V3" language="Lucid">
   <files>
     <src top="true">mojo_top.luc</src>
-    <src>blinker.luc</src>
     <src>evaluation.luc</src>
-    <ucf lib="true">mojo.ucf</ucf>
+    <src>blinker.luc</src>
     <ucf>custom.ucf</ucf>
+    <ucf lib="true">mojo.ucf</ucf>
     <component>reset_conditioner.luc</component>
   </files>
 </project>

@@ -1,11 +1,20 @@
 module blinker (
     input clk,  // clock
     input rst,  // reset
-    output blink
+    output a,
+    output b,
+    output c
   ) {
-  dff counter[25](.clk(clk),.rst(rst));
-  always {
-    blink = counter.q[24];
+  dff counter[27](.clk(clk),.rst(rst));
+  dff counter2[28](.clk(clk),.rst(rst));
+  dff counter3[29](.clk(clk),.rst(rst));
+
+    always {
+    a = counter.q[26];
     counter.d = counter.q+1;
+    b = counter2.q[27];
+    counter2.d = counter2.q+1;
+    c = counter3.q[28];
+    counter3.d = counter3.q+1;
   }
 }

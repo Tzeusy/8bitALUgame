@@ -1,13 +1,13 @@
-set projDir "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/planAhead"
+set projDir "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini Hardware/work/planAhead"
 set projName "Mini Hardware"
 set topName top
 set device xc6slx9-2tqg144
 if {[file exists "$projDir/$projName"]} { file delete -force "$projDir/$projName" }
 create_project $projName "$projDir/$projName" -part $device
 set_property design_mode RTL [get_filesets sources_1]
-set verilogSources [list "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/verilog/mojo_top_0.v" "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/verilog/reset_conditioner_1.v" "C:/Users/Tze/Dropbox (MIT)/Computational Structures/Mini Hardware/work/verilog/evaluation_2.v"]
+set verilogSources [list "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini Hardware/work/verilog/mojo_top_0.v" "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini Hardware/work/verilog/reset_conditioner_1.v" "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini Hardware/work/verilog/evaluation_2.v" "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini Hardware/work/verilog/blinker_3.v"]
 import_files -fileset [get_filesets sources_1] -force -norecurse $verilogSources
-set ucfSources [list "C:/Users/Tze/Dropbox\ (MIT)/Computational\ Structures/Mini\ Hardware/constraint/custom.ucf" "C:/Program\ Files/Mojo\ IDE/library/components/mojo.ucf"]
+set ucfSources [list "C:/Users/Tze/Documents/GitHub/8bitALUgame/Mini\ Hardware/constraint/custom.ucf" "C:/Program\ Files/Mojo\ IDE/library/components/mojo.ucf"]
 import_files -fileset [get_filesets constrs_1] -force -norecurse $ucfSources
 set_property -name {steps.bitgen.args.More Options} -value {-g Binary:Yes -g Compress} -objects [get_runs impl_1]
 set_property steps.map.args.mt on [get_runs impl_1]

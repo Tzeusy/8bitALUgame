@@ -11,9 +11,9 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
-    input a,                //input 1
-    input b,                //input 2
-    input c,                //carryin
+    output a,                //input 1
+    output b,                //input 2
+    output c,                //carryin
     input out1,             //sum
     input out2              //carryout
   ) {
@@ -27,18 +27,22 @@ module mojo_top (
     
     .rst(rst){
       evaluation evaluater;
+      blinker alternator;
     }
   }
   
   always {
-    evaluater.a = a;
-    evaluater.b = b;
-    evaluater.c = c;
+    a = alternator.a;
+    b = alternator.b;
+    c = alternator.c;
+    evaluater.a = alternator.a;
+    evaluater.b = alternator.b;
+    evaluater.c = alternator.c;
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
-    led[0] = a;
-    led[1] = b;
-    led[2] = c;
+    led[0] = alternator.a;
+    led[1] = alternator.b;
+    led[2] = alternator.c;
     led[3] = out1;
     led[4] = out2;
     led[5] = evaluater.fpgasum;

@@ -17,9 +17,9 @@ module mojo_top_0 (
     input avr_tx,
     output reg avr_rx,
     input avr_rx_busy,
-    input a,
-    input b,
-    input c,
+    output reg a,
+    output reg b,
+    output reg c,
     input out1,
     input out2
   );
@@ -49,16 +49,29 @@ module mojo_top_0 (
     .fpgasum(M_evaluater_fpgasum),
     .fpgacarry(M_evaluater_fpgacarry)
   );
+  wire [1-1:0] M_alternator_a;
+  wire [1-1:0] M_alternator_b;
+  wire [1-1:0] M_alternator_c;
+  blinker_3 alternator (
+    .clk(clk),
+    .rst(rst),
+    .a(M_alternator_a),
+    .b(M_alternator_b),
+    .c(M_alternator_c)
+  );
   
   always @* begin
-    M_evaluater_a = a;
-    M_evaluater_b = b;
-    M_evaluater_c = c;
+    a = M_alternator_a;
+    b = M_alternator_b;
+    c = M_alternator_c;
+    M_evaluater_a = M_alternator_a;
+    M_evaluater_b = M_alternator_b;
+    M_evaluater_c = M_alternator_c;
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
-    led[0+0-:1] = a;
-    led[1+0-:1] = b;
-    led[2+0-:1] = c;
+    led[0+0-:1] = M_alternator_a;
+    led[1+0-:1] = M_alternator_b;
+    led[2+0-:1] = M_alternator_c;
     led[3+0-:1] = out1;
     led[4+0-:1] = out2;
     led[5+0-:1] = M_evaluater_fpgasum;
