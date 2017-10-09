@@ -26,23 +26,128 @@ module mojo_top (
     reset_conditioner reset_cond;
     
     .rst(rst){
+      fsm state = {ZEROZEROZERO,ZEROZEROONE,ZEROONEZERO,ONEZEROZERO,ZEROONEONE,ONEZEROONE,ONEONEZERO,ONEONEONE};
       evaluation evaluater;
       blinker alternator;
     }
   }
   
   always {
-    a = alternator.a;
-    b = alternator.b;
-    c = alternator.c;
-    evaluater.a = alternator.a;
-    evaluater.b = alternator.b;
-    evaluater.c = alternator.c;
+    a = 0;
+    b = 0;
+    c = 0;  
+    evaluater.a = 0;
+    evaluater.b = 0;
+    evaluater.c = 0;  
+    case(state.q){
+      state.ZEROZEROZERO:
+        a = 0;
+        b = 0;
+        c = 0;
+        evaluater.a = 0;
+        evaluater.b = 0;
+        evaluater.c = 0;
+        led[0] = 0;
+        led[1] = 0;
+        led[2] = 0;
+        if(alternator.a==1){
+          state.d=state.ZEROZEROONE;
+        }
+      state.ZEROZEROONE:
+        a = 1;
+        b = 0;
+        c = 0;  
+        evaluater.a = 1;
+        evaluater.b = 0;
+        evaluater.c = 0;
+        led[0] = 1;
+        led[1] = 0;
+        led[2] = 0;
+        if(alternator.a==0){
+          state.d=state.ZEROONEZERO;
+        }
+      state.ZEROONEZERO:
+        a = 0;
+        b = 1;
+        c = 0;
+        evaluater.a = 0;
+        evaluater.b = 1;
+        evaluater.c = 0;
+        led[0] = 0;
+        led[1] = 1;
+        led[2] = 0;
+        if(alternator.a==1){
+          state.d=state.ONEZEROZERO;
+        }
+      state.ONEZEROZERO:
+        a = 0;
+        b = 0;
+        c = 1;
+        evaluater.a = 0;
+        evaluater.b = 0;
+        evaluater.c = 1;
+        led[0] = 0;
+        led[1] = 0;
+        led[2] = 1;
+        if(alternator.a==0){
+          state.d=state.ZEROONEONE;
+        }
+      state.ZEROONEONE:
+        a = 1;
+        b = 1;
+        c = 0;
+        evaluater.a = 1;
+        evaluater.b = 1;
+        evaluater.c = 0;
+        led[0] = 1;
+        led[1] = 1;
+        led[2] = 0;
+        if(alternator.a==1){
+          state.d=state.ONEZEROONE;
+        }
+      state.ONEZEROONE:
+        a = 1;
+        b = 0;
+        c = 1;
+        evaluater.a = 1;
+        evaluater.b = 0;
+        evaluater.c = 1;
+        led[0] = 1;
+        led[1] = 0;
+        led[2] = 1;
+        if(alternator.a==0){
+          state.d=state.ONEONEZERO;
+        }
+      state.ONEONEZERO:
+        a = 0;
+        b = 1;
+        c = 1;
+        evaluater.a = 0;
+        evaluater.b = 1;
+        evaluater.c = 1;
+        led[0] = 0;
+        led[1] = 1;
+        led[2] = 1;
+        if(alternator.a==1){
+          state.d=state.ONEONEONE;
+        }
+      state.ONEONEONE:
+        a = 1;
+        b = 1;
+        c = 1;
+        evaluater.a = 1;
+        evaluater.b = 1;
+        evaluater.c = 1;
+        led[0] = 1;
+        led[1] = 1;
+        led[2] = 1;
+        if(alternator.a==0){
+          state.d=state.ZEROZEROZERO;
+        }
+    }
+
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
-    led[0] = alternator.a;
-    led[1] = alternator.b;
-    led[2] = alternator.c;
     led[3] = out1;
     led[4] = out2;
     led[5] = evaluater.fpgasum;

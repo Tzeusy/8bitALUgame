@@ -35,6 +35,16 @@ module mojo_top_0 (
     .in(M_reset_cond_in),
     .out(M_reset_cond_out)
   );
+  localparam ZEROZEROZERO_state = 3'd0;
+  localparam ZEROZEROONE_state = 3'd1;
+  localparam ZEROONEZERO_state = 3'd2;
+  localparam ONEZEROZERO_state = 3'd3;
+  localparam ZEROONEONE_state = 3'd4;
+  localparam ONEZEROONE_state = 3'd5;
+  localparam ONEONEZERO_state = 3'd6;
+  localparam ONEONEONE_state = 3'd7;
+  
+  reg [2:0] M_state_d, M_state_q = ZEROZEROZERO_state;
   wire [1-1:0] M_evaluater_fpgasum;
   wire [1-1:0] M_evaluater_fpgacarry;
   reg [1-1:0] M_evaluater_a;
@@ -61,17 +71,131 @@ module mojo_top_0 (
   );
   
   always @* begin
-    a = M_alternator_a;
-    b = M_alternator_b;
-    c = M_alternator_c;
-    M_evaluater_a = M_alternator_a;
-    M_evaluater_b = M_alternator_b;
-    M_evaluater_c = M_alternator_c;
+    M_state_d = M_state_q;
+    
+    a = 1'h0;
+    b = 1'h0;
+    c = 1'h0;
+    M_evaluater_a = 1'h0;
+    M_evaluater_b = 1'h0;
+    M_evaluater_c = 1'h0;
+    
+    case (M_state_q)
+      ZEROZEROZERO_state: begin
+        a = 1'h0;
+        b = 1'h0;
+        c = 1'h0;
+        M_evaluater_a = 1'h0;
+        M_evaluater_b = 1'h0;
+        M_evaluater_c = 1'h0;
+        led[0+0-:1] = 1'h0;
+        led[1+0-:1] = 1'h0;
+        led[2+0-:1] = 1'h0;
+        if (M_alternator_a == 1'h1) begin
+          M_state_d = ZEROZEROONE_state;
+        end
+      end
+      ZEROZEROONE_state: begin
+        a = 1'h1;
+        b = 1'h0;
+        c = 1'h0;
+        M_evaluater_a = 1'h1;
+        M_evaluater_b = 1'h0;
+        M_evaluater_c = 1'h0;
+        led[0+0-:1] = 1'h1;
+        led[1+0-:1] = 1'h0;
+        led[2+0-:1] = 1'h0;
+        if (M_alternator_a == 1'h0) begin
+          M_state_d = ZEROONEZERO_state;
+        end
+      end
+      ZEROONEZERO_state: begin
+        a = 1'h0;
+        b = 1'h1;
+        c = 1'h0;
+        M_evaluater_a = 1'h0;
+        M_evaluater_b = 1'h1;
+        M_evaluater_c = 1'h0;
+        led[0+0-:1] = 1'h0;
+        led[1+0-:1] = 1'h1;
+        led[2+0-:1] = 1'h0;
+        if (M_alternator_a == 1'h1) begin
+          M_state_d = ONEZEROZERO_state;
+        end
+      end
+      ONEZEROZERO_state: begin
+        a = 1'h0;
+        b = 1'h0;
+        c = 1'h1;
+        M_evaluater_a = 1'h0;
+        M_evaluater_b = 1'h0;
+        M_evaluater_c = 1'h1;
+        led[0+0-:1] = 1'h0;
+        led[1+0-:1] = 1'h0;
+        led[2+0-:1] = 1'h1;
+        if (M_alternator_a == 1'h0) begin
+          M_state_d = ZEROONEONE_state;
+        end
+      end
+      ZEROONEONE_state: begin
+        a = 1'h1;
+        b = 1'h1;
+        c = 1'h0;
+        M_evaluater_a = 1'h1;
+        M_evaluater_b = 1'h1;
+        M_evaluater_c = 1'h0;
+        led[0+0-:1] = 1'h1;
+        led[1+0-:1] = 1'h1;
+        led[2+0-:1] = 1'h0;
+        if (M_alternator_a == 1'h1) begin
+          M_state_d = ONEZEROONE_state;
+        end
+      end
+      ONEZEROONE_state: begin
+        a = 1'h1;
+        b = 1'h0;
+        c = 1'h1;
+        M_evaluater_a = 1'h1;
+        M_evaluater_b = 1'h0;
+        M_evaluater_c = 1'h1;
+        led[0+0-:1] = 1'h1;
+        led[1+0-:1] = 1'h0;
+        led[2+0-:1] = 1'h1;
+        if (M_alternator_a == 1'h0) begin
+          M_state_d = ONEONEZERO_state;
+        end
+      end
+      ONEONEZERO_state: begin
+        a = 1'h0;
+        b = 1'h1;
+        c = 1'h1;
+        M_evaluater_a = 1'h0;
+        M_evaluater_b = 1'h1;
+        M_evaluater_c = 1'h1;
+        led[0+0-:1] = 1'h0;
+        led[1+0-:1] = 1'h1;
+        led[2+0-:1] = 1'h1;
+        if (M_alternator_a == 1'h1) begin
+          M_state_d = ONEONEONE_state;
+        end
+      end
+      ONEONEONE_state: begin
+        a = 1'h1;
+        b = 1'h1;
+        c = 1'h1;
+        M_evaluater_a = 1'h1;
+        M_evaluater_b = 1'h1;
+        M_evaluater_c = 1'h1;
+        led[0+0-:1] = 1'h1;
+        led[1+0-:1] = 1'h1;
+        led[2+0-:1] = 1'h1;
+        if (M_alternator_a == 1'h0) begin
+          M_state_d = ZEROZEROZERO_state;
+        end
+      end
+    endcase
     M_reset_cond_in = ~rst_n;
     rst = M_reset_cond_out;
-    led[0+0-:1] = M_alternator_a;
-    led[1+0-:1] = M_alternator_b;
-    led[2+0-:1] = M_alternator_c;
     led[3+0-:1] = out1;
     led[4+0-:1] = out2;
     led[5+0-:1] = M_evaluater_fpgasum;
@@ -81,4 +205,13 @@ module mojo_top_0 (
     spi_channel = 4'bzzzz;
     avr_rx = 1'bz;
   end
+  
+  always @(posedge clk) begin
+    if (rst == 1'b1) begin
+      M_state_q <= 1'h0;
+    end else begin
+      M_state_q <= M_state_d;
+    end
+  end
+  
 endmodule

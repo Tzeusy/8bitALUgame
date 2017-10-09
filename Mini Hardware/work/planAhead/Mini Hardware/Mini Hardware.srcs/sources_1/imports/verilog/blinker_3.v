@@ -35,15 +35,6 @@ module blinker_3 (
   
   always @(posedge clk) begin
     if (rst == 1'b1) begin
-      M_counter2_q <= 1'h0;
-    end else begin
-      M_counter2_q <= M_counter2_d;
-    end
-  end
-  
-  
-  always @(posedge clk) begin
-    if (rst == 1'b1) begin
       M_counter_q <= 1'h0;
     end else begin
       M_counter_q <= M_counter_d;
@@ -56,6 +47,15 @@ module blinker_3 (
       M_counter3_q <= 1'h0;
     end else begin
       M_counter3_q <= M_counter3_d;
+    end
+  end
+  
+  
+  always @(posedge clk) begin
+    if (rst == 1'b1) begin
+      M_counter2_q <= 1'h0;
+    end else begin
+      M_counter2_q <= M_counter2_d;
     end
   end
   
