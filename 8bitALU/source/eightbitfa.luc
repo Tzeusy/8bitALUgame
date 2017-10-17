@@ -3,8 +3,10 @@ module eightbitfa (
     input rst,  // reset
     input a[8],
     input b[8],
-    output s[8],
-    output c
+    output sum[8],
+    output v,
+    output z,
+    output s
   ) {
   
   fa fa1;
@@ -52,7 +54,7 @@ module eightbitfa (
     s[6]=fa7.sum;        
     s[7]=fa8.sum;        
     
-    c=fa8.carryout;
-    
+    v=fa8.carryout;
+        
   }
 }
