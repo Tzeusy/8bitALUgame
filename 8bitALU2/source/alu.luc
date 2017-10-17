@@ -14,6 +14,7 @@ module alu (
   comp comp1;  // comparator module 
   eightbitfa eightbitfa1; // 8 bit full adder
   mul mul1; // multiplication module
+  div div1; // division module
   shift shift1; // shifter
   boolean boolean1; // boolean operations
   
@@ -24,6 +25,9 @@ module alu (
     
     mul1.a = a;
     mul1.b = b;
+    
+    div1.a = a;
+    div1.b = b;
     
     comp1.v = eightbitfa1.v;
     comp1.n = eightbitfa1.n;
@@ -52,7 +56,8 @@ module alu (
     {
       6b000000: result = eightbitfa1.sum;
       6b000001: result = eightbitfa1.sum;
-      6b000010: result = mul1.value;      
+      6b000010: result = mul1.value;
+      6b000011: result = div1.value;      
       6b011000: result = boolean1.gate;
       6b011110: result = boolean1.gate;
       6b010110: result = boolean1.gate;

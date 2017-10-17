@@ -7,6 +7,7 @@
     <src>boolean.luc</src>
     <src>fa.luc</src>
     <src>comp.luc</src>
+    <src>div.luc</src>
     <src>mux.luc</src>
     <src top="true">mojo_top.luc</src>
     <src>eightbitfa.luc</src>

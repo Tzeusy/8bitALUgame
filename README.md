@@ -23,6 +23,7 @@ A comparator receives another set of `sum` and `carry` from an IRL IC system, an
 |    ADD     |   000000   | T
 |    SUB     |   000001   | -> ADDER   (ALUFN[1:0])
 |    MUL     |   000010   | -
+|    DIV     |   000011   |
 |            |            |
 |    AND     |   011000   | T  
 |     OR     |   011110   | |
