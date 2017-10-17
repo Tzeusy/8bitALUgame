@@ -1,10 +1,16 @@
 # Project Title
-
-8 Bit ALU for Computational Structures 1D. Based on Lucid with the Mojo v3 SPARTAN-6 FPGA
+8 Bit ALU for Computational Structures 1D. Based on Lucid with the Mojo v3 SPARTAN-6 FPGA.
 
 ## Getting Started
+Install the Mojo IDE and Xilinx ISE Design Suite, as described by the [Mojo FPGA Beginner's Guide](https://embeddedmicro.com/tutorials/mojo-fpga-beginners-guide).
 
-Install the Mojo IDE and Xilinx ISE Design Suite, as described by https://embeddedmicro.com/tutorials/mojo-fpga-beginners-guide.
+## Mini Hardware Project
+### [`mojo_top.luc`](Mini%20Hardware/source/mojo_top.luc)
+The main file for the mini hardware: calls the `evaluator.luc` and `blinker.luc` modules.
 
-## Sub-one: The Mini Hardware project
-The main file for the mini hardware is the mojo_top.luc, which calls the evaluator and blinker modules. Blinker manages the 3 full adder inputs A B and C, while Evaluation takes the values of A, B, and C, and returns a Sum or Carry, along with a comparator with a received sum/carry from an IRL IC system. 
+### [`blinker.luc`](Mini%20Hardware/source/blinker.luc)
+Manages the 3 full adder inputs A, B and C.
+
+### [`evaluation.luc`](Mini%20Hardware/source/evaluation.luc)
+Takes the value of A,B and C, and returns a `sum` and `carry`.<br>
+A comparator receives another set of `sum` and `carry` from an IRL IC system, and determines their equality.
