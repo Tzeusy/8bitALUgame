@@ -1,0 +1,30 @@
+module mux (
+    input clk,  // clock
+    input rst,  // reset
+    input a[8],
+    input b[8],
+    input c[8],
+    input d[8],
+    input alufn0,
+    input alufn1,
+    output out[8]
+  ) {
+
+  always {
+    if(alufn0==0&&alufn1==0){
+      out[7:0]=a[7:0];
+    }
+    if(alufn0==0&&alufn1==1){
+      out[7:0]=b[7:0];
+    }
+    if(alufn0==1&&alufn1==0){
+      out[7:0]=c[7:0];
+    }
+    if(alufn0==1&&alufn1==1){
+      out[7:0]=d[7:0];
+    }
+    else{
+      out[7:0]=0;
+    }
+  }
+}

@@ -1,0 +1,42 @@
+module multiplier (
+    input clk,  // clock
+    input rst,  // reset
+    input a[8],
+    input b[8],
+    output out[8]
+  ) {
+  
+  fa fa1;
+  fa fa2;
+  fa fa3;
+  fa fa4;
+  fa fa5;
+  fa fa6;
+  fa fa7;
+  fa fa8;
+  fa fa9;
+  fa fa10;
+  fa fa11;
+  fa fa12;
+  fa fa13;
+  fa fa14;
+  fa fa15;
+  fa fa16;
+  fa fa17;
+  fa fa18;
+  fa fa19;
+  fa fa20;
+  fa fa21;
+  fa fa22;
+  fa fa23;
+  fa fa24;
+  fa fa25;
+  fa fa26;
+  fa fa27;
+  fa fa28;    
+  
+  alwa
+    
+    out[0]=a[0]&&b[7];
+  }
+}
