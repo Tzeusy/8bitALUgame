@@ -2,9 +2,10 @@
 <project name="8bitALU2" board="Mojo V3" language="Lucid">
   <files>
     <src>shift.luc</src>
-    <src>fa.luc</src>
-    <src>boolean.luc</src>
+    <src>mul.luc</src>
     <src>alu.luc</src>
+    <src>boolean.luc</src>
+    <src>fa.luc</src>
     <src>comp.luc</src>
     <src>mux.luc</src>
     <src top="true">mojo_top.luc</src>

@@ -1,0 +1,85 @@
+module mul (
+    input a[8],
+    input b[8],
+    output value[8]
+  ) {
+
+  var i, j;
+  sig partials[8][8], total[8];
+   
+  // instantiate the adders for the cascading addition
+  eightbitfa fa1;
+  eightbitfa fa2;
+  eightbitfa fa3;
+  eightbitfa fa4;
+  eightbitfa fa5;
+  eightbitfa fa6;
+  eightbitfa fa7;
+  eightbitfa fa8;
+
+  always {
+  
+    // set the adders to ADD
+    fa1.alufn = 0;
+    fa2.alufn = 0;
+    fa3.alufn = 0;
+    fa4.alufn = 0;
+    fa5.alufn = 0;
+    fa6.alufn = 0;
+    fa7.alufn = 0;
+    fa8.alufn = 0;
+    
+    total = 0;
+    
+    for (i = 0; i < 8; i++){
+      // for every value..
+      for (j = i; j < 8; j++){
+        partials[i][j] = a[j] & b[i]; // AND as it traverses through, store the partials 
+      }
+    }
+    
+    // for (i = 0; i < 8; i++){
+      // use a shift left to shift the partial left by i bits.
+
+      // add the shifted partials to the total.
+    //  eightbitfa1.a = total;
+    //  eightbitfa1.b = partials[i] << i;
+      
+    //   total = eightbitfa1.sum;
+    // }
+    
+    fa1.a = total;
+    fa1.b = partials[0] << 0;
+    total = fa1.sum;
+    
+    fa2.a = total;
+    fa2.b = partials[1] << 1;
+    total = fa2.sum;
+    
+    fa3.a = total;
+    fa3.b = partials[1] << 2;
+    total = fa3.sum;
+    
+    fa4.a = total;
+    fa4.b = partials[1] << 3;
+    total = fa4.sum;
+    
+    fa5.a = total;
+    fa5.b = partials[1] << 4;
+    total = fa5.sum;
+    
+    fa6.a = total;
+    fa6.b = partials[1] << 5;
+    total = fa6.sum;
+    
+    fa7.a = total;
+    fa7.b = partials[1] << 6;
+    total = fa7.sum;
+    
+    fa8.a = total;
+    fa8.b = partials[1] << 7;
+    total = fa8.sum;
+    
+    value = total;
+  }
+}
