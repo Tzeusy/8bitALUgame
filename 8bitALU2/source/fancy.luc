@@ -85,7 +85,7 @@ module fancy (
       6b110101: // big
         seg_values[0] = 8b10000011;
         seg_values[1] = 8b11001111;
-        seg_values[2] = 8b10000010;
+        seg_values[2] = 8b10010000;
         
       6b110111: // LESS
         seg_values[0] = 8b11000111;
