@@ -1,0 +1,11 @@
+module div (
+    input a[8],
+    input b[8],
+    output value
+  ) {
+  sig total[8];
+  always {
+    total = 0;
+    value = total;
+  }
+}

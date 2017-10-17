@@ -25,25 +25,32 @@ module mojo_top (
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     alu alu1;
+    
+    .rst(rst){
+      fancy wow;
+    }
   }
   
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     alu1.alufn[5:0]= io_dip[0][5:0]; // alufn is set to the first row of io shield's DIP switches
+    wow.alufn[5:0] = io_dip[0][5:0];
     alu1.a=io_dip[1][7:0]; // input A is set to the second row
     alu1.b=io_dip[2][7:0]; // input B is set to the third row.
     
     io_led[0]=alu1.result;
     io_led[1]=0;
-    io_led[2]=0;  
+    io_led[2]=0;
+    
     
     led = 8h00;             // turn LEDs off
     spi_miso = bz;          // not using SPI
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
-  
-    io_seg = 8hff;          // turn segments off
-    io_sel = 4hf;           // select no digits
+    
+    io_seg = wow.seg;    // turn segments on
+    io_sel = wow.sel;  
+           
   }
 }
