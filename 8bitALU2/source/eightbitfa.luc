@@ -22,8 +22,8 @@ module eightbitfa (
   
   always {
     
-    for(i=0;i<8;i++){
-      x[i]=b[i]^alufn;
+    for(i = 0; i < 8; i++){
+      x[i] = b[i] ^ alufn;
     }
     //x[7:0] = b[7:0]^alufn;    
     fa1.c = alufn;
