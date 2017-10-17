@@ -2,8 +2,9 @@
 <project name="8bitALU" board="Mojo V3" language="Lucid">
   <files>
     <src>shift.luc</src>
-    <src>fa.luc</src>
+    <src>rand.luc</src>
     <src>boolean.luc</src>
+    <src>fa.luc</src>
     <src>comp.luc</src>
     <src>multiplier.luc</src>
     <src>mux.luc</src>
