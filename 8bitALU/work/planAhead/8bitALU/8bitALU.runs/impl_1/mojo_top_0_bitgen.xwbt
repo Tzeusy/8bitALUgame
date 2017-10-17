@@ -1,0 +1,8 @@
+INTSTYLE=pa
+INFILE=C:\Users\Tze\Documents\GitHub\8bitALUgame\8bitALU\work\planAhead\8bitALU\8bitALU.runs\impl_1\mojo_top_0_routed.ncd
+OUTFILE=C:\Users\Tze\Documents\GitHub\8bitALUgame\8bitALU\work\planAhead\8bitALU\8bitALU.runs\impl_1\mojo_top_0.bit
+FAMILY=Spartan6
+PART=xc6slx9-2tqg144
+WORKINGDIR=C:\Users\Tze\Documents\GitHub\8bitALUgame\8bitALU\work\planAhead\8bitALU\8bitALU.runs\impl_1
+LICENSE=WebPack
+USER_INFO=211398713_0_0_479
