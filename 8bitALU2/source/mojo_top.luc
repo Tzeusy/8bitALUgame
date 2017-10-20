@@ -12,13 +12,19 @@ module mojo_top (
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
     output io_led [3][8],   // LEDs on IO Shield
-    output io_seg [8],      // 7-segment LEDs on IO Shield
-    output io_sel [4],      // Digit select on IO Shield
-    input io_button [5],    // 5 buttons on IO Shield
-    input io_dip [3][8]     // DIP switches on IO Shield
+    input io_dip [3][8],     // DIP switches on IO Shield
+    output io_seg[8],
+    output io_sel[4]
   ) {
   
   sig rst;                  // reset signal
+  dff ab_counter[20](.clk(clk), .rst(rst)); // let a = counter[7:0], b = counter[15:8], alufn[19:16]
+  dff ab_counter_counter[10](.clk(clk), .rst(rst)); // ab_counter_counter increments ab_counter by 1 per full cycle
+  sig a[8];
+  sig b[8];
+  sig alu_index[4]; // alu_index is the index which maps an int [0-12) to an ALUFN number
+  sig alufn[6]; // alufn stores the actual ALUFN which goes into the ALU
+  sig mojo_result[8];
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
@@ -26,7 +32,7 @@ module mojo_top (
     reset_conditioner reset_cond;
     alu alu1;
     
-    .rst(rst){
+    .rst(rst) {
       fancy wow;
     }
   }
@@ -34,23 +40,72 @@ module mojo_top (
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
-    alu1.alufn[5:0]= io_dip[0][5:0]; // alufn is set to the first row of io shield's DIP switches
-    wow.alufn[5:0] = io_dip[0][5:0];
-    alu1.a=io_dip[1][7:0]; // input A is set to the second row
-    alu1.b=io_dip[2][7:0]; // input B is set to the third row.
     
-    io_led[0]=alu1.result;
-    io_led[1]=0;
-    io_led[2]=0;
+    a = ab_counter.q[7:0];
+    b = ab_counter.q[15:8];
+    alu_index = ab_counter.q[19:16];
     
+    // grab the correct ALUFN based on the cyclic counter
+    case(alu_index) {
+      4b0000: alufn = 6b000000;
+      4b0001: alufn = 6b000001;
+      4b0010: alufn = 6b000010;
+      4b0011: alufn = 6b011000;
+      4b0100: alufn = 6b011110;
+      4b0101: alufn = 6b010110;
+      4b0110: alufn = 6b011010;
+      4b0111: alufn = 6b100000;
+      4b1000: alufn = 6b100001;
+      4b1001: alufn = 6b100011;
+      4b1010: alufn = 6b110011;
+      4b1011: alufn = 6b110101;
+      //4b1100: alufn = 6b110111;
+      default: alufn = 0;
+    }
+    
+    // toggle the input (A,B) to the ALU using DIP switches
+    alu1.a = a ^ io_dip[0];
+    alu1.b = b ^ io_dip[1];
+    alu1.alufn = alufn;
+    
+    // display input values and ALU result
+    io_led[0] = a;
+    io_led[1] = b;
+    io_led[2] = alu1.result;
+    
+    // show current ALUFN
+    wow.alufn = alufn;
+    io_seg = wow.seg;
+    io_sel = wow.sel;
+    
+    case(alufn) {
+      6b000000: mojo_result = a+b;
+      6b000001: mojo_result = a-b;
+      6b000010: mojo_result = a*b;
+      6b000011: mojo_result = a/b;
+      6b011000: mojo_result = a&b;
+      6b011110: mojo_result = a|b;
+      6b010110: mojo_result = a^b;
+      6b011010: mojo_result = a;
+      6b100000: mojo_result = a<<b;
+      6b100001: mojo_result = a>>b;
+      6b100011: mojo_result = $signed(a)>>>b;
+      6b110011: mojo_result = a==b;
+      6b110101: mojo_result = $signed(a)<$signed(b);
+      6b110111: mojo_result = $signed(a)<=$signed(b);
+      default: mojo_result = 0;
+    }
+    
+    if (mojo_result == alu1.result) {
+      ab_counter_counter.d = ab_counter_counter.q + 1;
+    }
+    if (ab_counter_counter.q == 10b1111111111) {
+      ab_counter.d = ab_counter.q + 1;
+    }
     
     led = 8h00;             // turn LEDs off
     spi_miso = bz;          // not using SPI
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
-    
-    io_seg = wow.seg;    // turn segments on
-    io_sel = wow.sel;  
-           
   }
 }

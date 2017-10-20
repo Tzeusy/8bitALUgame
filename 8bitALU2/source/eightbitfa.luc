@@ -62,8 +62,8 @@ module eightbitfa (
     sum[6]=fa7.sum;
     sum[7]=fa8.sum;
     
+    z=~(fa1.sum|fa2.sum|fa3.sum|fa4.sum|fa5.sum|fa6.sum|fa7.sum|fa8.sum);    
     v=((a[7] & x[7] & (~fa8.sum)) | ((~a[7]) & (~x[7]) & fa8.sum));
     n=fa8.sum;
-    z=~(fa1.sum|fa2.sum|fa3.sum|fa4.sum|fa5.sum|fa6.sum|fa7.sum|fa8.sum);
   }
 }
