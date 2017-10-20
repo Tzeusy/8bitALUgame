@@ -1,4 +1,7 @@
-# Project Title
+# This is the automated testing branch.
+
+
+# ALU
 8 Bit ALU for Computational Structures 1D. Based on Lucid with the Mojo v3 SPARTAN-6 FPGA.
 
 ## Getting Started
