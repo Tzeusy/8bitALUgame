@@ -1,3 +1,4 @@
+// Comparator module
 module comp (
   input alufn[2],
   input z,
@@ -8,9 +9,9 @@ module comp (
   sig comp;
   always {
     case(alufn) {
-      b01: comp=z;
-      b10: comp=n^v;
-      b11: comp=z|(n^v);
+      b01: comp=z; // this compares whether they are equal with the help of z from the adder.
+      b10: comp=n^v; // this compares whether they are lesser than 
+      b11: comp=z|(n^v); // this compares whether they are equal
       default: comp=0;
     }
     compared = 0;

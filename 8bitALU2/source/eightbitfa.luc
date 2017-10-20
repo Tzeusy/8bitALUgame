@@ -1,3 +1,5 @@
+// the full adder but cascaded 8 times.
+// uses the fa.luc.
 module eightbitfa (
 
     input a[8],

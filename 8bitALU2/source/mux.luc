@@ -1,3 +1,4 @@
+// mux to select based on selector.
 module mux (
     input clk,  // clock
     input rst,  // reset

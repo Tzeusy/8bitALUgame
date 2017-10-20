@@ -59,7 +59,7 @@ module mojo_top (
       4b1001: alufn = 6b100011;
       4b1010: alufn = 6b110011;
       4b1011: alufn = 6b110101;
-      //4b1100: alufn = 6b110111;
+      4b1100: alufn = 6b110111;
       default: alufn = 0;
     }
     
