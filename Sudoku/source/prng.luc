@@ -1,0 +1,83 @@
+module prng (
+    input clk,  // clock
+    input rst,  // reset
+    input seed[8],
+    output value[8],
+    output done
+  ) {
+  
+  const SHL = 6b100000;
+  const SHR = 6b100001;
+  const XOR = 6b010110;
+
+  fsm state(.clk(clk), .rst(rst), #INIT(PRNG_1)) = {PRNG_1, PRNG_2, PRNG_3, PRNG_4, PRNG_5, PRNG_6, PRNG_DONE};
+  dff temp_value[8](.clk(clk), .rst(rst));
+  dff prng_value[8](.clk(clk), .rst(rst));
+
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    alu alu;
+  }
+
+  always {
+    done = 0;
+    
+    alu = 0;
+    alu.b = 0;
+    alu.alufn = 0;
+
+    case (state.q) {
+      state.PRNG_1: // temp = x << 7
+        alu.a = seed;
+        alu.b = 7;
+        alu.alufn = SHL;
+        
+        temp_value.d = alu.result;
+        state.d = state.PRNG_2;
+        
+      state.PRNG_2: // val = x ^ temp
+        alu.a = seed;
+        alu.b = temp_value.q;
+        alu.alufn = XOR;
+        
+        prng_value.d = alu.result;
+        state.d = state.PRNG_3;
+        
+      state.PRNG_3: // temp = val >> 5
+        alu.a = prng_value.q;
+        alu.b = 5;
+        alu.alufn = SHR;
+        
+        temp_value.d = alu.result;
+        state.d = state.PRNG_4;
+        
+      state.PRNG_4: // val = val ^ temp
+        alu.a = prng_value.q;
+        alu.b = temp_value.q;
+        alu.alufn = XOR;
+        
+        prng_value.d = alu.result;
+        state.d = state.PRNG_5;
+        
+      state.PRNG_5: // temp = val << 3
+        alu.a = prng_value.q;
+        alu.b = 3;
+        alu.alufn = SHL;
+        
+        temp_value.d = alu.result;
+        state.d = state.PRNG_6;
+      state.PRNG_6: // val = val ^ temp
+        alu.a = prng_value.q;
+        alu.b = temp_value.q;
+        alu.alufn = XOR;
+        
+        prng_value.d = alu.result;
+        state.d = state.PRNG_DONE;
+        
+      state.PRNG_DONE:
+        done = 1;
+    }
+    value = prng_value.q; // return val
+  }
+}
