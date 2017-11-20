@@ -50,16 +50,16 @@ module mojo_top (
       {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0}
     };
     display.board = board;
-    display.activated = 0;
+    display.en = 0;
     
     case (state.q) {
       state.GET_PRNG:
         io_led[0] = prng.value;
         if (prng.done == 1) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
-        display.activated = 1;
+        display.en = 1;
         if (display.done == 1) {
-          display.activated = 0;
+          display.en = 0;
           state.d = state.WAIT;
         }
     }

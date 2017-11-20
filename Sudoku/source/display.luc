@@ -1,10 +1,9 @@
 module display (
     input clk,  // clock
     input rst,  // reset
-    input activated,
-    input board[8][8][3], // (row, col, led_state)
-    output led_strip[8],
-    output done
+    input en,
+    input data[8][8][3], // (row, col, led_state)
+    output led_strip[8]
   ) {
   
   // enum for different led_states
@@ -20,7 +19,8 @@ module display (
   const COLOR_RED = c{8d0, 8d255, 8d0};
   const COLOR_GREEN = c{8d255, 8d0, 8d0};
   
-  fsm state(.clk(clk), .rst(rst), #INIT(ROW_0)) = {ROW_0, ROW_1, ROW_2, ROW_3, ROW_4, ROW_5, ROW_6, ROW_7, DONE};
+  fsm state(.clk(clk), .rst(rst), #INIT(ROW_0)) = {ROW_0, ROW_1, ROW_2, ROW_3, ROW_4, ROW_5, ROW_6, ROW_7};
+  dff board[8][8][3](.clk(clk), .rst(rst));
   dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
   sig row_number[3]; // temp variable to store the current row to be rendered
   sig foo[11]; // temp variable to store (n % 1536), which yields the column to be rendered
@@ -28,10 +28,9 @@ module display (
   sig grb[24]; // temp variable to store the GRB values for LED given its led_state
 
   always {
-    done = 0;
     led_strip = 8b0;
-    
-    if (activated == 1) {
+    if (en == 1) board.d = data;
+    else {
       counter.d = counter.q + 1;
       
       if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
@@ -46,7 +45,7 @@ module display (
           state.ROW_7: row_number = 7;
           default: row_number = 0;
         }
-        led_state = board[row_number][counter.q/(64*24)]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
+        led_state = board.q[row_number][counter.q/(64*24)]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
         case (led_state) {
           LED_OFF: grb = COLOR_BLACK;
           LED_0: grb = COLOR_RED;
@@ -57,10 +56,10 @@ module display (
         // logic 0 - 20 clocks HIGH + 44 clocks LOW
         // logic 1 - 40 clocks HIGH + 24 clocks LOW
         if (grb[23-(foo>>6)] == 0) { // grab the corresponding bit out of 24 (bits are retrieved left to right)
-          if (foo[5:0] < 20) led_strip = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
+          if (foo[5:0] < 20) led_strip[row_number] = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
         }
         else {
-          if (foo[5:0] < 40) led_strip = 1; // send a logic 1
+          if (foo[5:0] < 40) led_strip[row_number] = 1; // send a logic 1
         }
       }
       
@@ -73,14 +72,9 @@ module display (
           state.ROW_4: state.d = state.ROW_5;
           state.ROW_5: state.d = state.ROW_6;
           state.ROW_6: state.d = state.ROW_7;
-          state.ROW_7: state.d = state.DONE;
-          state.DONE:  done = 1;
+          state.ROW_7: state.d = state.ROW_0;
         }
       }
-    }
-    else {
-      state.d = state.ROW_0; // reset to original state
-      counter.d = 0;
     }
   }
 }
