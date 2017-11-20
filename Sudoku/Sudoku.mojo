@@ -5,6 +5,7 @@
     <src>alu_shift.luc</src>
     <src>alu_eightbitfa.luc</src>
     <src>alu_fa.luc</src>
+    <src>display.luc</src>
     <src>alu_boolean.luc</src>
     <src>prng.luc</src>
     <src top="true">mojo_top.luc</src>

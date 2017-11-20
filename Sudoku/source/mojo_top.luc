@@ -17,7 +17,8 @@ module mojo_top (
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst), #INIT(GET_PRNG)) = {GET_PRNG, INIT_BOARD};
+  fsm state(.clk(clk), .rst(rst), #INIT(GET_PRNG)) = {GET_PRNG, INIT_BOARD, WAIT};
+  sig board[8][8][3];
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
@@ -26,6 +27,7 @@ module mojo_top (
     
     .rst(rst) {
       prng prng;
+      display display;
     }
   }
   
@@ -37,12 +39,29 @@ module mojo_top (
     io_led[2] = io_dip[2] ^ prng_pin;
     prng.seed = io_dip[2] ^ prng_pin;
     
+    board = {
+      {3d0,3d1,3d1,3d0,3d1,3d0,3d0,3d1},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0}
+    };
+    display.board = board;
+    display.activated = 0;
+    
     case (state.q) {
       state.GET_PRNG:
         io_led[0] = prng.value;
         if (prng.done == 1) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
-        io_led[1] = 8b10101010;
+        display.activated = 1;
+        if (display.done == 1) {
+          display.activated = 0;
+          state.d = state.WAIT;
+        }
     }
     
     

@@ -23,7 +23,7 @@ module prng (
   always {
     done = 0;
     
-    alu = 0;
+    alu.a = 0;
     alu.b = 0;
     alu.alufn = 0;
 
