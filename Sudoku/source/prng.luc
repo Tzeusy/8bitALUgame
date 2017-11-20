@@ -3,7 +3,7 @@ module prng (
     input rst,  // reset
     input seed[8],
     output value[8],
-    output done
+    output read_enable
   ) {
   
   const SHL = 6b100000;
@@ -21,7 +21,7 @@ module prng (
   }
 
   always {
-    done = 0;
+    read_enable = 0;
     
     alu.a = 0;
     alu.b = 0;
@@ -76,7 +76,7 @@ module prng (
         state.d = state.PRNG_DONE;
         
       state.PRNG_DONE:
-        done = 1;
+        read_enable = 1;
     }
     value = prng_value.q; // return val
   }

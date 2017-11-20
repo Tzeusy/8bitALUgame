@@ -22,7 +22,7 @@ module display (
   
   var i; // for loop counter
 
-  dff board[8][8][3](.clk(clk), .rst(rst));
+  dff board[8][8][3](.clk(clk), .rst(rst)); // stores the current board state like a register
   dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
   sig foo[11]; // temp variable to store (n % 1536), which yields the column to be rendered
   sig led_state[3]; // temp variable to store state of chosen individual LED

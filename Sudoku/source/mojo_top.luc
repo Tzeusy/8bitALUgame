@@ -11,15 +11,15 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
-    output io_led [3][8],   // LEDs on IO Shield
     input io_dip [3][8],    // DIP switches on IO Shield
     input prng_pin[8],
     output led_strip[8]
   ) {
   
+
+  
   sig rst;                  // reset signal
   fsm state(.clk(clk), .rst(rst), #INIT(GET_PRNG)) = {GET_PRNG, INIT_BOARD, WAIT};
-  sig board[8][8][3];
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
@@ -29,6 +29,7 @@ module mojo_top (
     .rst(rst) {
       prng prng;
       board_generator gen;
+      board_manager mgr;
       display display;
     }
   }
@@ -36,21 +37,30 @@ module mojo_top (
   always {
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
-    io_led[1] = 8b0;
-    // getting a random result from floating pins
-    io_led[2] = io_dip[2] ^ prng_pin;
-    prng.seed = io_dip[2] ^ prng_pin;
+    
+    // seeding prng
+    prng.seed = io_dip[2] ^ prng_pin; // getting a random result from floating pins    
+    // permanent value for board_generator
     gen.n = prng.value[1:0];
+    // default variables for board_manager
+    mgr.en = 0;
+    mgr.data = mgr.out;
+    // default variables for display
     display.en = 0;
-    display.data = gen.board;
-    led_strip = display.out;
-
+    display.data = mgr.out;
+    led_strip = display.out; // permanent setting for led strip output
+    
     case (state.q) {
       state.GET_PRNG:
-        io_led[0] = prng.value;
-        if (prng.done == 1) state.d = state.INIT_BOARD;
+        // wait for prng to complete its calculations
+        if (prng.read_enable == 1) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
+        // writes initial board to the display
         display.en = 1;
+        display.data = gen.init_board;
+        // writes initial board to the manager
+        mgr.en = 1;
+        mgr.data = gen.init_board;
         state.d = state.WAIT;
     }
     

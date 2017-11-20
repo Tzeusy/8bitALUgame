@@ -1,0 +1,26 @@
+module board_manager (
+    input clk,  // clock
+    input rst,  // reset
+    input en,
+    input data[8][8][3],
+    output out[8][8][3]
+  ) {
+  
+  const EMPTY_BOARD = {
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0}
+  };
+  
+  dff board[8][8][3](.clk(clk), .rst(rst), #INIT(EMPTY_BOARD));
+
+  always {
+    out = board.q;
+    if (en == 1) board.d = data;
+  }
+}
