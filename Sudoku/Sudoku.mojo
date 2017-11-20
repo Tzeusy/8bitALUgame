@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Sudoku" board="Mojo V3" language="Lucid">
   <files>
+    <src>board_generator.luc</src>
     <src>alu.luc</src>
     <src>alu_shift.luc</src>
     <src>alu_eightbitfa.luc</src>

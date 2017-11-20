@@ -1,0 +1,24 @@
+module board_generator (
+    input clk,  // clock
+    input rst,  // reset
+    input n[2],
+    output board[8][8][3]
+  ) {
+  
+  sig board0[8][8][3];
+
+  always {
+    board0 = {
+      {3d1,3d0,3d0,3d1,3d0,3d1,3d1,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
+      {3d1,3d2,3d3,3d0,3d0,3d3,3d2,3d1}
+    };
+    
+    board = board0;
+  }
+}

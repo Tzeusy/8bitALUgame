@@ -3,77 +3,55 @@ module display (
     input rst,  // reset
     input en,
     input data[8][8][3], // (row, col, led_state)
-    output led_strip[8]
+    output out[8]
   ) {
   
   // enum for different led_states
   const LED_OFF = 0;
   const LED_0 = 1;
   const LED_1 = 2;
-  const LED_OFF_SELECTED = 3;
-  const LED_0_SELECTED = 4;
-  const LED_1_SELECTED = 5;
+  //const LED_OFF_SELECTED = 3;
+  //const LED_0_SELECTED = 4;
+  //const LED_1_SELECTED = 5;
   
   // preset colours (in GRB)
   const COLOR_BLACK = 24b0;
-  const COLOR_RED = c{8d0, 8d255, 8d0};
-  const COLOR_GREEN = c{8d255, 8d0, 8d0};
+  const COLOR_RED = c{8d0, 8d31, 8d0};
+  const COLOR_GREEN = c{8d31, 8d0, 8d0};
+  const COLOR_BLUE = c{8d0, 8d0, 8d31};
   
-  fsm state(.clk(clk), .rst(rst), #INIT(ROW_0)) = {ROW_0, ROW_1, ROW_2, ROW_3, ROW_4, ROW_5, ROW_6, ROW_7};
+  var i; // for loop counter
+
   dff board[8][8][3](.clk(clk), .rst(rst));
   dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
-  sig row_number[3]; // temp variable to store the current row to be rendered
   sig foo[11]; // temp variable to store (n % 1536), which yields the column to be rendered
   sig led_state[3]; // temp variable to store state of chosen individual LED
   sig grb[24]; // temp variable to store the GRB values for LED given its led_state
 
   always {
-    led_strip = 8b0;
+    out = 8b0;
     if (en == 1) board.d = data;
     else {
-      counter.d = counter.q + 1;
-      
-      if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
-        case (state.q) {
-          state.ROW_0: row_number = 0;
-          state.ROW_1: row_number = 1;
-          state.ROW_2: row_number = 2;
-          state.ROW_3: row_number = 3;
-          state.ROW_4: row_number = 4;
-          state.ROW_5: row_number = 5;
-          state.ROW_6: row_number = 6;
-          state.ROW_7: row_number = 7;
-          default: row_number = 0;
+      for (i=0; i<8; i++) {
+        if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
+          led_state = board.q[7-i][7-(counter.q/(64*24))]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
+          case (led_state) {
+            LED_OFF: grb = COLOR_BLACK;
+            LED_0: grb = COLOR_RED;
+            LED_1: grb = COLOR_GREEN;
+            default: grb = COLOR_BLUE;
+          }
+          foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)
+          // logic 0 - 20 clocks HIGH + 44 clocks LOW
+          // logic 1 - 40 clocks HIGH + 24 clocks LOW
+          if (grb[23-(foo>>6)] == 0) { // grab the corresponding bit out of 24 (bits are retrieved left to right)
+            if (foo[5:0] < 20) out[i] = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
+          }
+          else {
+            if (foo[5:0] < 40) out[i] = 1; // send a logic 1
+          }
         }
-        led_state = board.q[row_number][counter.q/(64*24)]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
-        case (led_state) {
-          LED_OFF: grb = COLOR_BLACK;
-          LED_0: grb = COLOR_RED;
-          LED_1: grb = COLOR_GREEN;
-          default: grb = COLOR_BLACK;
-        }
-        foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)
-        // logic 0 - 20 clocks HIGH + 44 clocks LOW
-        // logic 1 - 40 clocks HIGH + 24 clocks LOW
-        if (grb[23-(foo>>6)] == 0) { // grab the corresponding bit out of 24 (bits are retrieved left to right)
-          if (foo[5:0] < 20) led_strip[row_number] = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
-        }
-        else {
-          if (foo[5:0] < 40) led_strip[row_number] = 1; // send a logic 1
-        }
-      }
-      
-      if (counter.q == 14h3FFF) { // reached the end of 1 row - go to the next
-        case (state.q) {
-          state.ROW_0: state.d = state.ROW_1;
-          state.ROW_1: state.d = state.ROW_2;
-          state.ROW_2: state.d = state.ROW_3;
-          state.ROW_3: state.d = state.ROW_4;
-          state.ROW_4: state.d = state.ROW_5;
-          state.ROW_5: state.d = state.ROW_6;
-          state.ROW_6: state.d = state.ROW_7;
-          state.ROW_7: state.d = state.ROW_0;
-        }
+        counter.d = counter.q + 1;
       }
     }
   }
