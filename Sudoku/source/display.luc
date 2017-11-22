@@ -1,18 +1,18 @@
-module display (
+module display #(ROW=8, COL=8)(
     input clk,  // clock
     input rst,  // reset
-    input en,
-    input data[8][8][3], // (row, col, led_state)
-    output out[8]
+    input data[ROW][COL][2], // (row, col, led_state)
+    input mask[ROW][COL][1],
+    output out[ROW]
   ) {
   
   // enum for different led_states
   const LED_OFF = 0;
-  const LED_0 = 1;
-  const LED_1 = 2;
-  //const LED_OFF_SELECTED = 3;
-  //const LED_0_SELECTED = 4;
-  //const LED_1_SELECTED = 5;
+  const LED_0 = 2;
+  const LED_1 = 3;
+  //const LED_OFF_SELECTED = 4;
+  //const LED_0_SELECTED = 6;
+  //const LED_1_SELECTED = 7;
   
   // preset colours (in GRB)
   const COLOR_BLACK = 24b0;
@@ -21,8 +21,10 @@ module display (
   const COLOR_BLUE = c{8d0, 8d0, 8d31};
   
   var i; // for loop counter
+  var r;
+  var c;
 
-  dff board[8][8][3](.clk(clk), .rst(rst)); // stores the current board state like a register
+  dff board[ROW][COL][3](.clk(clk), .rst(rst)); // stores the current board state like a register
   dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
   sig foo[11]; // temp variable to store (n % 1536), which yields the column to be rendered
   sig led_state[3]; // temp variable to store state of chosen individual LED
@@ -30,29 +32,29 @@ module display (
 
   always {
     out = 8b0;
-    if (en == 1) board.d = data;
-    else {
-      for (i=0; i<8; i++) {
-        if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
-          led_state = board.q[7-i][7-(counter.q/(64*24))]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
-          case (led_state) {
-            LED_OFF: grb = COLOR_BLACK;
-            LED_0: grb = COLOR_RED;
-            LED_1: grb = COLOR_GREEN;
-            default: grb = COLOR_BLUE;
-          }
-          foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)
-          // logic 0 - 20 clocks HIGH + 44 clocks LOW
-          // logic 1 - 40 clocks HIGH + 24 clocks LOW
-          if (grb[23-(foo>>6)] == 0) { // grab the corresponding bit out of 24 (bits are retrieved left to right)
-            if (foo[5:0] < 20) out[i] = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
-          }
-          else {
-            if (foo[5:0] < 40) out[i] = 1; // send a logic 1
-          }
+    // update board
+    for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = data[r][c] + 3*mask[r][c];
+    // render display
+    for (i=0; i<ROW; i++) {
+      if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
+        led_state = board.q[i][counter.q/(64*24)]; // counter.q/(64*24) == column number - obtains led_state for given (row, col)
+        case (led_state) {
+          LED_OFF: grb = COLOR_BLACK;
+          LED_0: grb = COLOR_RED;
+          LED_1: grb = COLOR_GREEN;
+          default: grb = COLOR_BLUE;
         }
-        counter.d = counter.q + 1;
+        foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)
+        // logic 0 - 20 clocks HIGH + 44 clocks LOW
+        // logic 1 - 40 clocks HIGH + 24 clocks LOW
+        if (grb[23-(foo>>6)] == 0) { // grab the corresponding bit out of 24 (bits are retrieved left to right)
+          if (foo[5:0] < 20) out[i] = 1; // send a logic 0 by checking current clock in the cycle of the last 64 bits
+        }
+        else {
+          if (foo[5:0] < 40) out[i] = 1; // send a logic 1
+        }
       }
+      counter.d = counter.q + 1;
     }
   }
 }

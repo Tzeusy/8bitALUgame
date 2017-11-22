@@ -2,34 +2,36 @@ module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
     output led [8],         // 8 user controllable LEDs
-    input cclk,             // configuration clock, AVR ready when high
+    //input cclk,             // configuration clock, AVR ready when high
     output spi_miso,        // AVR SPI MISO
-    input spi_ss,           // AVR SPI Slave Select
-    input spi_mosi,         // AVR SPI MOSI
-    input spi_sck,          // AVR SPI Clock
+    //input spi_ss,           // AVR SPI Slave Select
+    //input spi_mosi,         // AVR SPI MOSI
+    //input spi_sck,          // AVR SPI Clock
     output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-    input avr_tx,           // AVR TX (FPGA RX)
+    //input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
-    input avr_rx_busy,      // AVR RX buffer full
+    //input avr_rx_busy,      // AVR RX buffer full
     input io_dip [3][8],    // DIP switches on IO Shield
-    input prng_pin[8],
-    output led_strip[8]
+    input io_button[5],
+    output led_strip[8],
+    output io_led[3][8]
   ) {
   
-
-  
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst), #INIT(GET_PRNG)) = {GET_PRNG, INIT_BOARD, WAIT};
+  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT};
+  board_generator gen;
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
+    button_conditioner button_cond;
+    edge_detector edge_detector(#RISE(1), #FALL(0));
     
     .rst(rst) {
       prng prng;
-      board_generator gen;
-      board_manager mgr;
+      board_manager board_mgr;
+      mask_manager mask_mgr;
       display display;
     }
   }
@@ -37,31 +39,40 @@ module mojo_top (
   always {
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
-    
+    io_led = {8h00, 8h00, 8h00};
+    button_cond.in = io_button[1];
+    edge_detector.in = button_cond.out;
     // seeding prng
-    prng.seed = io_dip[2] ^ prng_pin; // getting a random result from floating pins    
+    prng.seed = io_dip[2];
     // permanent value for board_generator
     gen.n = prng.value[1:0];
     // default variables for board_manager
-    mgr.en = 0;
-    mgr.data = mgr.out;
+    board_mgr.write = 0;
+    board_mgr.toggle = 0;
+    board_mgr.row = 3b0;
+    board_mgr.col = 3b0;
+    board_mgr.data = board_mgr.out;
+    // default variables for mask_manager
+    mask_mgr.write_state = 2b0;
+    mask_mgr.row = 3b0;
+    mask_mgr.col = 3b0;
     // default variables for display
-    display.en = 0;
-    display.data = mgr.out;
+    display.data = board_mgr.out;
+    display.mask = mask_mgr.out; // set to mask later
     led_strip = display.out; // permanent setting for led strip output
     
     case (state.q) {
       state.GET_PRNG:
         // wait for prng to complete its calculations
-        if (prng.read_enable == 1) state.d = state.INIT_BOARD;
+        if (prng.read_enable) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
-        // writes initial board to the display
-        display.en = 1;
-        display.data = gen.init_board;
+      
         // writes initial board to the manager
-        mgr.en = 1;
-        mgr.data = gen.init_board;
+        board_mgr.write = 1;
+        board_mgr.data = gen.init_board;
         state.d = state.WAIT;
+      state.WAIT:
+        board_mgr.toggle = edge_detector.out;
     }
     
     led = 8h00;               // turn LEDs off

@@ -1,26 +1,40 @@
-module board_manager (
+module board_manager #(ROW=8, COL=8)(
     input clk,  // clock
     input rst,  // reset
-    input en,
-    input data[8][8][3],
-    output out[8][8][3]
+    input write, // set to 1 to write a new board state
+    input data[ROW][COL][2],
+    input toggle, // set to 1 to toggle a single (r,c) element
+    input row[3],
+    input col[3],
+    output out[ROW][COL][2] // returns current board state
   ) {
   
   const EMPTY_BOARD = {
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0},
-      {3d0,3d0,3d0,3d0,3d0,3d0,3d0,3d0}
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0}
   };
+  const AND = 6b011000;
   
-  dff board[8][8][3](.clk(clk), .rst(rst), #INIT(EMPTY_BOARD));
+  alu alu;
+  sig a;
+  sig b;
+  dff board[ROW][COL][2](.clk(clk), .rst(rst), #INIT(EMPTY_BOARD));
 
   always {
+    a = board.q[row][col][1];
+    b = board.q[row][col][0];
+    alu.a = a;
+    alu.b = ~b;
+    alu.alufn = AND;
+    
     out = board.q;
-    if (en == 1) board.d = data;
+    if (write) board.d = data;
+    else if (toggle) board.d[row][col] = c{~b, alu.result[0]};
   }
 }

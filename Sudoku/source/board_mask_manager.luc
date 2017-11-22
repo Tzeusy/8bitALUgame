@@ -1,0 +1,40 @@
+module mask_manager #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input write_state[2], // 00 - read only, 01 - write row, 10 - write col, 11 - write both
+    input row[3],
+    input col[3],
+    output out[8][8][1]
+  ) {
+  
+  // although it is currently unnecessary to make the mask 3-dimensional
+  // I felt that it should be so in order to maintain consistency with the board
+  // this also supports future changes to the mask
+  const EMPTY_MASK = {
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0},
+      {0,0,0,0,0,0,0,0}
+  };
+  
+  dff mask[ROW][COL][1](.clk(clk), .rst(rst), #INIT(EMPTY_MASK));
+  // for loop counter variables
+  var r;
+  var c;
+  
+  always {
+    out = mask.q;
+    if (write_state != 2b00) {
+      mask.d = EMPTY_MASK;
+      case (write_state) {
+        2b01: for (c=0; c<COL; c++) mask.d[row][c] = 1;
+        2b10: for (r=0; r<ROW; r++) mask.d[r][col] = 1;
+        2b11: mask.d[row][col] = 1;
+      }
+    }
+  }
+}

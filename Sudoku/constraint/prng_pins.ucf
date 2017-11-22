@@ -1,9 +1,0 @@
-# specified pins that are meant to be floating
-NET "prng_pin<0>"  LOC = P57 | IOSTANDARD = LVTTL;
-NET "prng_pin<1>"  LOC = P66 | IOSTANDARD = LVTTL;
-NET "prng_pin<2>" LOC = P74 | IOSTANDARD = LVTTL;
-NET "prng_pin<3>" LOC = P78 | IOSTANDARD = LVTTL;
-NET "prng_pin<4>" LOC = P80 | IOSTANDARD = LVTTL;
-NET "prng_pin<5>" LOC = P82 | IOSTANDARD = LVTTL;
-NET "prng_pin<6>" LOC = P84 | IOSTANDARD = LVTTL;
-NET "prng_pin<7>" LOC = P87 | IOSTANDARD = LVTTL;

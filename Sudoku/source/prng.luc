@@ -9,16 +9,11 @@ module prng (
   const SHL = 6b100000;
   const SHR = 6b100001;
   const XOR = 6b010110;
-
-  fsm state(.clk(clk), .rst(rst), #INIT(PRNG_1)) = {PRNG_1, PRNG_2, PRNG_3, PRNG_4, PRNG_5, PRNG_6, PRNG_DONE};
+  alu alu;
+  
+  fsm state(.clk(clk), .rst(rst)) = {PRNG_1, PRNG_2, PRNG_3, PRNG_4, PRNG_5, PRNG_6, PRNG_DONE};
   dff temp_value[8](.clk(clk), .rst(rst));
   dff prng_value[8](.clk(clk), .rst(rst));
-
-  .clk(clk) {
-    // The reset conditioner is used to synchronize the reset signal to the FPGA
-    // clock. This ensures the entire FPGA comes out of reset at the same time.
-    alu alu;
-  }
 
   always {
     read_enable = 0;

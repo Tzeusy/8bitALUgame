@@ -3,7 +3,6 @@
 // which action to perform on the inputs.
 
 module alu (
-    input clk,  // clock 
     input a[8],
     input b[8],
     input alufn[6],
