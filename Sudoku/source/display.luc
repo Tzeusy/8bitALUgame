@@ -7,12 +7,12 @@ module display #(ROW=8, COL=8)(
   ) {
   
   // enum for different led_states
-  const LED_OFF = 0;
-  const LED_0 = 2;
-  const LED_1 = 3;
-  const LED_OFF_SELECTED = 4;
-  const LED_0_SELECTED = 6;
-  const LED_1_SELECTED = 7;
+  const LED_OFF = 0;          // 000
+  const LED_0 = 2;            // 010
+  const LED_1 = 3;            // 011
+  const LED_OFF_SELECTED = 4; // 100
+  const LED_0_SELECTED = 6;   // 110
+  const LED_1_SELECTED = 7;   // 111
   
   // preset colours (in GRB)
   const COLOR_BLACK = 24b0;
@@ -31,7 +31,7 @@ module display #(ROW=8, COL=8)(
   always {
     out = 8b0;
     // update board
-    for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = data[r][c] + 3*mask[r][c];
+    for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = c{mask[r][c][0], data[r][c]}; // refer to bit pattern for led_states
     // render display
     for (i=0; i<ROW; i++) {
       if (counter.q < 64*24*8) { // if not within the "rest" block - there is data to be sent
@@ -40,9 +40,9 @@ module display #(ROW=8, COL=8)(
           LED_OFF: grb = COLOR_BLACK;
           LED_0: grb = COLOR_RED;
           LED_1: grb = COLOR_GREEN;
-          LED_OFF_SELECTED: grb = c{8d127, 8d127, 8d127};
-          LED_0_SELECTED: grb = c{8d127, 8d255, 8d127};
-          LED_1_SELECTED: grb = c{8d255, 8d127, 8d127};
+          LED_OFF_SELECTED: grb = c{8d31, 8d31, 8d31};
+          LED_0_SELECTED: grb = c{8d15, 8d31, 8d15};
+          LED_1_SELECTED: grb = c{8d63, 8d31, 8d31};
           default: grb = COLOR_BLUE;
         }
         foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)

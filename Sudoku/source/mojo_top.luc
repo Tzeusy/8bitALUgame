@@ -155,7 +155,8 @@ module mojo_top #(ROW=8, COL=8)(
         mask_mgr.row = select_mgr.row_out;
         mask_mgr.col = select_mgr.col_out;
         
-        if (toggle_detector.out) {
+        if (check_detector.out) state.d = state.CHECK;
+        else if (toggle_detector.out) {
           board_mgr.row = select_mgr.row_out;
           board_mgr.col = select_mgr.col_out;
           board_mgr.toggle = 1;
