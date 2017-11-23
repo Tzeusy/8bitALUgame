@@ -1,0 +1,22 @@
+module select_manager (
+    input clk,  // clock
+    input rst,  // reset
+    input write_row,
+    input write_col,
+    input row_in[3],
+    input col_in[3],
+    output row_out[3],
+    output col_out[3]
+  ) {
+  
+  dff row[3](.clk(clk), .rst(rst));
+  dff col[3](.clk(clk), .rst(rst));
+
+  always {
+    row_out = row.q;
+    col_out = col.q;
+    
+    if (write_row) row.d = row_in;
+    if (write_col) col.d = col_in;
+  }
+}

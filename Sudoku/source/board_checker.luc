@@ -1,7 +1,6 @@
 module board_checker #(ROW=8, COL=8)(
     input clk,  // clock
     input rst,  // reset
-    input en,
     input board[ROW][COL][2],
     input ans[ROW][COL][2],
     output out,
@@ -22,18 +21,16 @@ module board_checker #(ROW=8, COL=8)(
     alu.b = ans[row.q][col.q];
     alu.alufn = CMPEQ;
     
-    if (en) {
-      case (state.q) {
-        state.CHECK:
-          correct.d = correct.q & alu.result[0];
-          if (col.q == 3b111) row.d = row.q + 1;
-          col.d = col.q + 1;
-          if (row.q == 3b111 && col.q == 3b111) state.d = state.DONE;
-        state.DONE:
-          read_enable = 1;
-          correct.d = 1; // reset
-          state.d = state.CHECK;
-      }
+    case (state.q) {
+      state.CHECK:
+        correct.d = correct.q & alu.result[0];
+        if (col.q == 3b111) row.d = row.q + 1;
+        col.d = col.q + 1;
+        if (row.q == 3b111 && col.q == 3b111) state.d = state.DONE;
+      state.DONE:
+        read_enable = 1;
+        correct.d = 1; // reset
+        state.d = state.CHECK;
     }
   }
 }

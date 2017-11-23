@@ -1,4 +1,4 @@
-module mojo_top (
+module mojo_top #(ROW=8, COL=8)(
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
     output led [8],         // 8 user controllable LEDs
@@ -13,42 +13,56 @@ module mojo_top (
     //input avr_rx_busy,      // AVR RX buffer full
     input io_dip [3][8],    // DIP switches on IO Shield
     input io_button[5],
-    output led_strip[8],
-    output io_led[3][8]
+    output led_strip[ROW]
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, CHECK, WRONG, DONE};
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
-  board_generator gen;
+  board_generator gen(#ROW(ROW), #COL(COL));
+  var i;
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-    button_conditioner button_cond;
-    edge_detector edge_detector(#RISE(1), #FALL(0));
+    
+    button_conditioner toggle_conditioner;
+    button_conditioner check_conditioner;
+    button_conditioner row_conditioner;
+    button_conditioner col_conditioner;
+    // edge detectors for button conditioners - {toggle, check, row[0-7], col[0-7]}
+    edge_detector toggle_detector(#RISE(1), #FALL(0));
+    edge_detector check_detector(#RISE(1), #FALL(0));
+    edge_detector row_detector(#RISE(1), #FALL(0));
+    edge_detector col_detector(#RISE(1), #FALL(0));
     
     .rst(rst) {
       prng prng;
-      board_manager board_mgr;
-      mask_manager mask_mgr;
-      board_checker chkr;
-      display display;
+      board_manager board_mgr(#ROW(ROW), #COL(COL));
+      mask_manager mask_mgr(#ROW(ROW), #COL(COL));
+      select_manager select_mgr;
+      board_checker chkr(#ROW(ROW), #COL(COL));
+      display display(#ROW(ROW), #COL(COL));
     }
   }
   
   always {
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
-    io_led = {8h00, 8h00, 8h00};
-    io_led[0][1:0] = prng.value[1:0];
-    // components for button pressing
-    button_cond.in = io_button[1];
-    edge_detector.in = button_cond.out;
+    // initializing button conditioners
+    toggle_conditioner.in = io_button[1]; // toggle_button_cond.in = toggle_button;
+    check_conditioner.in = io_button[4];
+    row_conditioner.in = |io_dip[0];
+    col_conditioner.in = |io_dip[1];
+    // initializing edge detectors
+    toggle_detector.in = toggle_conditioner.out;
+    check_detector.in = check_conditioner.out;
+    row_detector.in = row_conditioner.out;
+    col_detector.in = col_conditioner.out;
     // seeding prng
     prng.seed = io_dip[2];
-    // permanent value for board_generator
+    // const value for board_generator
     gen.n = prng.value[1:0];
     // default variables for board_manager
     board_mgr.write = 0;
@@ -60,8 +74,12 @@ module mojo_top (
     mask_mgr.write_state = 2b0;
     mask_mgr.row = 3b0;
     mask_mgr.col = 3b0;
+    // default variables for select_manager
+    select_mgr.write_row = 0;
+    select_mgr.write_col = 0;
+    select_mgr.row_in = 3b0;
+    select_mgr.col_in = 3b0;
     // const variables for board_checker
-    chkr.en = 0;
     chkr.board = board_mgr.out;
     chkr.ans = gen.ans;
     // const variables for display
@@ -79,9 +97,90 @@ module mojo_top (
         board_mgr.data = gen.init;
         state.d = state.WAIT;
       state.WAIT:
-        if (edge_detector.out == 1) state.d = state.CHECK;
+        mask_mgr.write_state = 2b00;
+        
+        if (check_detector.out) state.d = state.CHECK;        
+        else if (row_detector.out) {
+          for (i=0; i<ROW; i++) if (io_dip[0][i]) select_mgr.row_in = i;
+          select_mgr.write_row = 1;
+          state.d = state.ROW_SELECTED;
+        }
+        else if (col_detector.out) {
+          for (i=0; i<COL; i++) if (io_dip[1][i]) select_mgr.col_in = i;
+          select_mgr.write_col = 1;
+          state.d = state.COL_SELECTED;
+        }
+      state.ROW_SELECTED:
+        mask_mgr.write_state = 2b01;
+        mask_mgr.row = select_mgr.row_out;
+        
+        if (check_detector.out) state.d = state.CHECK;
+        else if (row_detector.out) { // if same row, return to state.WAIT, else change row
+          for (i=0; i<ROW; i++) 
+            if (io_dip[0][i]) {
+              if (select_mgr.row_out == i) state.d = state.WAIT;
+              else {
+                select_mgr.row_in = i;
+                select_mgr.write_row = 1;
+              }
+            }
+        }
+        else if (col_detector.out) { // set col, go to state.BOTH_SELECTED
+          for (i=0; i<COL; i++) if (io_dip[1][i]) select_mgr.col_in = i;
+          select_mgr.write_col = 1;
+          state.d = state.BOTH_SELECTED;
+        }
+      state.COL_SELECTED:
+        mask_mgr.write_state = 2b10;
+        mask_mgr.col = select_mgr.col_out;
+        
+        if (check_detector.out) state.d = state.CHECK;
+        else if (row_detector.out) { // set row, go to state.BOTH_SELECTED
+          for (i=0; i<ROW; i++) if (io_dip[0][i]) select_mgr.row_in = i;
+          select_mgr.write_row = 1;
+          state.d = state.BOTH_SELECTED;
+        }
+        else if (col_detector.out) { // if same col, return to state.WAIT, else change col
+          for (i=0; i<COL; i++)
+            if (io_dip[1][i]) {
+              if (select_mgr.col_out == i) state.d = state.WAIT;
+              else {
+                select_mgr.col_in = i;
+                select_mgr.write_col = 1;
+              }
+            }
+        }
+      state.BOTH_SELECTED:
+        mask_mgr.write_state = 2b11;
+        mask_mgr.row = select_mgr.row_out;
+        mask_mgr.col = select_mgr.col_out;
+        
+        if (toggle_detector.out) {
+          board_mgr.row = select_mgr.row_out;
+          board_mgr.col = select_mgr.col_out;
+          board_mgr.toggle = 1;
+        }
+        else if (row_detector.out) {
+          for (i=0; i<ROW; i++)
+            if (io_dip[0][i]) {
+              if (select_mgr.row_out == i) state.d = state.WAIT;
+              else {
+                select_mgr.row_in = i;
+                select_mgr.write_row = 1;
+              }
+            }
+        }
+        else if (col_detector.out) {
+          for (i=0; i<COL; i++)
+            if (io_dip[1][i]) {
+              if (select_mgr.col_out == i) state.d = state.WAIT;
+              else {
+                select_mgr.col_in = i;
+                select_mgr.write_col = 1;
+              }
+            }
+        }
       state.CHECK:
-        chkr.en = 1;
         if (chkr.read_enable) state.d = chkr.out ? state.DONE : state.WRONG;
       state.WRONG:
         wrong_counter.d = wrong_counter.q + 1;

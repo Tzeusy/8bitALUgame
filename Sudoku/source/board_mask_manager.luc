@@ -26,13 +26,11 @@ module mask_manager #(ROW=8, COL=8)(
   
   always {
     out = mask.q;
-    if (write_state != 2b00) {
-      mask.d = EMPTY_MASK;
-      case (write_state) {
-        2b01: for (c=0; c<COL; c++) mask.d[row][c] = 1;
-        2b10: for (r=0; r<ROW; r++) mask.d[r][col] = 1;
-        2b11: mask.d[row][col] = 1;
-      }
+    mask.d = EMPTY_MASK;
+    case (write_state) {
+      2b01: for (c=0; c<COL; c++) mask.d[row][c] = 1;
+      2b10: for (r=0; r<ROW; r++) mask.d[r][col] = 1;
+      2b11: mask.d[row][col] = 1;
     }
   }
 }

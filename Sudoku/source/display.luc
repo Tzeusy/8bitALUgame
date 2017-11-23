@@ -10,9 +10,9 @@ module display #(ROW=8, COL=8)(
   const LED_OFF = 0;
   const LED_0 = 2;
   const LED_1 = 3;
-  //const LED_OFF_SELECTED = 4;
-  //const LED_0_SELECTED = 6;
-  //const LED_1_SELECTED = 7;
+  const LED_OFF_SELECTED = 4;
+  const LED_0_SELECTED = 6;
+  const LED_1_SELECTED = 7;
   
   // preset colours (in GRB)
   const COLOR_BLACK = 24b0;
@@ -40,6 +40,9 @@ module display #(ROW=8, COL=8)(
           LED_OFF: grb = COLOR_BLACK;
           LED_0: grb = COLOR_RED;
           LED_1: grb = COLOR_GREEN;
+          LED_OFF_SELECTED: grb = c{8d127, 8d127, 8d127};
+          LED_0_SELECTED: grb = c{8d127, 8d255, 8d127};
+          LED_1_SELECTED: grb = c{8d255, 8d127, 8d127};
           default: grb = COLOR_BLUE;
         }
         foo = counter.q - ((counter.q/(64*24))*(64*24)); // gets the current block of 1536 - 1536 clocks corresponds to (64clocks/bit * 8bits/colour * 3colours)
