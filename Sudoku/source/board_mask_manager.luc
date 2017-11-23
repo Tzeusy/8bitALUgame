@@ -22,9 +22,7 @@ module mask_manager #(ROW=8, COL=8)(
   };
   
   dff mask[ROW][COL][1](.clk(clk), .rst(rst), #INIT(EMPTY_MASK));
-  // for loop counter variables
-  var r;
-  var c;
+  var r, c; // for-loop counters
   
   always {
     out = mask.q;

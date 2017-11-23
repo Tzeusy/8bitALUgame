@@ -1,0 +1,39 @@
+module board_checker #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input en,
+    input board[ROW][COL][2],
+    input ans[ROW][COL][2],
+    output out,
+    output read_enable
+  ) {
+  
+  const CMPEQ = 6b110011;
+  alu alu;
+  fsm state(.clk(clk), .rst(rst)) = {CHECK, DONE};
+  dff correct(.clk(clk), .rst(rst), #INIT(1)); // accumulating boolean for whether the board is correct
+  dff row[3](.clk(clk), .rst(rst)); // counter for row number
+  dff col[3](.clk(clk), .rst(rst)); // counter for col number
+
+  always {
+    out = correct.q;
+    read_enable = 0;
+    alu.a = board[row.q][col.q];
+    alu.b = ans[row.q][col.q];
+    alu.alufn = CMPEQ;
+    
+    if (en) {
+      case (state.q) {
+        state.CHECK:
+          correct.d = correct.q & alu.result[0];
+          if (col.q == 3b111) row.d = row.q + 1;
+          col.d = col.q + 1;
+          if (row.q == 3b111 && col.q == 3b111) state.d = state.DONE;
+        state.DONE:
+          read_enable = 1;
+          correct.d = 1; // reset
+          state.d = state.CHECK;
+      }
+    }
+  }
+}

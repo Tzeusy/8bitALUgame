@@ -22,8 +22,7 @@ module board_manager #(ROW=8, COL=8)(
   const AND = 6b011000;
   
   alu alu;
-  sig a;
-  sig b;
+  sig a, b;
   dff board[ROW][COL][2](.clk(clk), .rst(rst), #INIT(EMPTY_BOARD));
 
   always {

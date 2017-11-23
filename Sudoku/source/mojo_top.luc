@@ -18,7 +18,8 @@ module mojo_top (
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT};
+  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, CHECK, WRONG, DONE};
+  dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   board_generator gen;
   
   .clk(clk) {
@@ -32,6 +33,7 @@ module mojo_top (
       prng prng;
       board_manager board_mgr;
       mask_manager mask_mgr;
+      board_checker chkr;
       display display;
     }
   }
@@ -40,6 +42,8 @@ module mojo_top (
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
     io_led = {8h00, 8h00, 8h00};
+    io_led[0][1:0] = prng.value[1:0];
+    // components for button pressing
     button_cond.in = io_button[1];
     edge_detector.in = button_cond.out;
     // seeding prng
@@ -56,23 +60,35 @@ module mojo_top (
     mask_mgr.write_state = 2b0;
     mask_mgr.row = 3b0;
     mask_mgr.col = 3b0;
-    // default variables for display
+    // const variables for board_checker
+    chkr.en = 0;
+    chkr.board = board_mgr.out;
+    chkr.ans = gen.ans;
+    // const variables for display
     display.data = board_mgr.out;
-    display.mask = mask_mgr.out; // set to mask later
-    led_strip = display.out; // permanent setting for led strip output
+    display.mask = mask_mgr.out;
+    led_strip = display.out;
     
     case (state.q) {
       state.GET_PRNG:
         // wait for prng to complete its calculations
         if (prng.read_enable) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
-      
         // writes initial board to the manager
         board_mgr.write = 1;
-        board_mgr.data = gen.init_board;
+        board_mgr.data = gen.init;
         state.d = state.WAIT;
       state.WAIT:
-        board_mgr.toggle = edge_detector.out;
+        if (edge_detector.out == 1) state.d = state.CHECK;
+      state.CHECK:
+        chkr.en = 1;
+        if (chkr.read_enable) state.d = chkr.out ? state.DONE : state.WRONG;
+      state.WRONG:
+        wrong_counter.d = wrong_counter.q + 1;
+        if (wrong_counter.q == 25h1ffffff) state.d = state.WAIT;
+        display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
+      state.DONE:
+        display.data = gen.done;
     }
     
     led = 8h00;               // turn LEDs off

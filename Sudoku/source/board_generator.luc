@@ -1,14 +1,32 @@
 module board_generator #(ROW=8, COL=8)(
     input n[2],
-    output init_board[ROW][COL][2],
-    output ans_board[ROW][COL][2]
+    output init[ROW][COL][2],
+    output ans[ROW][COL][2],
+    output empty[ROW][COL][2], // board of all 0s
+    output wrong[ROW][COL][2], // board of all 1s (red)
+    output done[ROW][COL][2] // board to show when game is complete
   ) {
-  
+
   sig init_boards[4][ROW][COL][2];
   sig ans_boards[4][ROW][COL][2];
+  // temp variables to do things with boards
+  sig temp_empty[ROW][COL][2];
+  sig temp_wrong[ROW][COL][2];
+  sig temp_done[ROW][COL][2];
+  var i, j;
 
   always {
     init_boards[0] = {
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d3,2d2,2d0,2d2,2d2,2d0,2d2,2d3}
+    };
+    ans_boards[0] = {
       {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
@@ -18,38 +36,8 @@ module board_generator #(ROW=8, COL=8)(
       {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d3,2d2,2d0,2d2,2d2,2d0,2d2,2d3}
     };
+    
     init_boards[1] = {
-      {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
-    };
-    init_boards[2] = {
-      {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
-    };
-    init_boards[2] = {
-      {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
-      {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
-    };
-          
-    ans_boards[0] = {
       {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
       {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
@@ -69,7 +57,8 @@ module board_generator #(ROW=8, COL=8)(
       {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
     };
-    ans_boards[2] = {
+    
+    init_boards[2] = {
       {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
       {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
       {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
@@ -90,7 +79,38 @@ module board_generator #(ROW=8, COL=8)(
       {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
     };
     
-    init_board = init_boards[n];
-    ans_board = ans_boards[n];
+    init_boards[3] = {
+      {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
+    };
+    ans_boards[3] = {
+      {2d1,2d0,2d0,2d1,2d0,2d1,2d1,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d1,2d2,2d2,2d0,2d0,2d2,2d2,2d1}
+    };
+    
+    init = init_boards[n];
+    ans = ans_boards[n];
+    
+    for (i=0; i<ROW; i++) 
+      for (j=0; j<COL; j++) {
+        temp_empty[i][j] = 2d0;
+        temp_wrong[i][j] = 2d2;
+        temp_done[i][j] = 2d1;
+    }
+    empty = temp_empty;
+    wrong = temp_wrong;
+    done = temp_done;
   }
 }

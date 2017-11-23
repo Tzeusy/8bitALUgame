@@ -20,9 +20,7 @@ module display #(ROW=8, COL=8)(
   const COLOR_GREEN = c{8d31, 8d0, 8d0};
   const COLOR_BLUE = c{8d0, 8d0, 8d31};
   
-  var i; // for loop counter
-  var r;
-  var c;
+  var i, r, c; // for-loop counters
 
   dff board[ROW][COL][3](.clk(clk), .rst(rst)); // stores the current board state like a register
   dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
