@@ -40,3 +40,7 @@ Five ALU functions were used:
 * [XOR](https://github.com/Tzeusy/8bitALUgame/blob/master/Sudoku/source/prng.luc#L37)
 * [AND](https://github.com/Tzeusy/8bitALUgame/blob/master/Sudoku/source/board_manager.luc#L33)
 * [CMPEQ](https://github.com/Tzeusy/8bitALUgame/blob/master/Sudoku/source/board_checker.luc#L22)
+
+## Sources
+[Implementing registers in Mojo](https://github.com/kurniawano/Mojo-Examples/tree/master/SimpleRegisters)  
+[Binary sudoku boards](http://www.binarypuzzle.com/puzzles.php?size=8)
