@@ -17,7 +17,8 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
+  dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   board_generator gen(#ROW(ROW), #COL(COL));
   var i;
@@ -157,9 +158,12 @@ module mojo_top #(ROW=8, COL=8)(
         
         if (check_detector.out) state.d = state.CHECK;
         else if (toggle_detector.out) {
-          board_mgr.row = select_mgr.row_out;
-          board_mgr.col = select_mgr.col_out;
-          board_mgr.toggle = 1;
+          if (gen.init[select_mgr.row_out][select_mgr.col_out] != 2b00) state.d = state.NO_TOGGLE;
+          else {
+            board_mgr.row = select_mgr.row_out;
+            board_mgr.col = select_mgr.col_out;
+            board_mgr.toggle = 1;
+          }
         }
         else if (row_detector.out) {
           for (i=0; i<ROW; i++)
@@ -181,6 +185,10 @@ module mojo_top #(ROW=8, COL=8)(
               }
             }
         }
+      state.NO_TOGGLE:
+        no_toggle_counter.d = no_toggle_counter.q + 1;
+        if (no_toggle_counter.q == 24hffffff) state.d = state.BOTH_SELECTED;
+        display.data = gen.no_toggle;
       state.CHECK:
         if (chkr.read_enable) state.d = chkr.out ? state.DONE : state.WRONG;
       state.WRONG:
@@ -188,7 +196,8 @@ module mojo_top #(ROW=8, COL=8)(
         if (wrong_counter.q == 25h1ffffff) state.d = state.WAIT;
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
       state.DONE:
-        display.data = gen.done;
+        display.data = gen.no_toggle;
+        display.mask = gen.mask;
     }
     
     led = 8h00;               // turn LEDs off

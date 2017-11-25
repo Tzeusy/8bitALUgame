@@ -4,7 +4,8 @@ module board_generator #(ROW=8, COL=8)(
     output ans[ROW][COL][2],
     output empty[ROW][COL][2], // board of all 0s
     output wrong[ROW][COL][2], // board of all 1s (red)
-    output done[ROW][COL][2] // board to show when game is complete
+    output no_toggle[ROW][COL][2], // board to show when toggling is blocked
+    output mask[ROW][COL][1]
   ) {
 
   sig init_boards[4][ROW][COL][2];
@@ -12,7 +13,8 @@ module board_generator #(ROW=8, COL=8)(
   // temp variables to do things with boards
   sig temp_empty[ROW][COL][2];
   sig temp_wrong[ROW][COL][2];
-  sig temp_done[ROW][COL][2];
+  sig temp_no_toggle[ROW][COL][2];
+  sig temp_mask[ROW][COL][1]; // this is specifically for the rainbow display
   var i, j;
 
   always {
@@ -107,10 +109,12 @@ module board_generator #(ROW=8, COL=8)(
       for (j=0; j<COL; j++) {
         temp_empty[i][j] = 2d0;
         temp_wrong[i][j] = 2d2;
-        temp_done[i][j] = 2d1;
+        temp_no_toggle[i][j] = 2d1;
+        temp_mask[i][j] = 1;
     }
     empty = temp_empty;
     wrong = temp_wrong;
-    done = temp_done;
+    no_toggle = temp_no_toggle;
+    mask = temp_mask;
   }
 }
