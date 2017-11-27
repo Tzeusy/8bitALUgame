@@ -8,8 +8,11 @@ module board_checker #(ROW=8, COL=8)(
   ) {
   
   const CMPEQ = 6b110011;
+  const AND = 6b011000;
+  
   alu alu;
-  fsm state(.clk(clk), .rst(rst)) = {CHECK, DONE};
+  fsm state(.clk(clk), .rst(rst)) = {CHECK, ACCUMULATE, DONE};
+  dff prev_result(.clk(clk), .rst(rst));
   dff correct(.clk(clk), .rst(rst), #INIT(1)); // accumulating boolean for whether the board is correct
   dff row[3](.clk(clk), .rst(rst)); // counter for row number
   dff col[3](.clk(clk), .rst(rst)); // counter for col number
@@ -17,16 +20,31 @@ module board_checker #(ROW=8, COL=8)(
   always {
     out = correct.q;
     read_enable = 0;
-    alu.a = board[row.q][col.q];
-    alu.b = ans[row.q][col.q];
-    alu.alufn = CMPEQ;
+    alu.a = 0;
+    alu.b = 0;
+    alu.alufn = 0;
     
     case (state.q) {
       state.CHECK:
-        correct.d = correct.q & alu.result[0];
+        alu.a = board[row.q][col.q];
+        alu.b = ans[row.q][col.q];
+        alu.alufn = CMPEQ;
+        // store (board[r][c] == ans[r][c])
+        prev_result.d = alu.result[0];
+
+      state.ACCUMULATE:
+        alu.a = correct.q;
+        alu.b = prev_result.q;
+        alu.alufn = AND;
+        // accumulate (correct & prev_result)
+        correct.d = alu.result[0];
+        // increment col & row
         if (col.q == 3b111) row.d = row.q + 1;
         col.d = col.q + 1;
+        state.d = state.CHECK;
+        // if (7,7), move to finish
         if (row.q == 3b111 && col.q == 3b111) state.d = state.DONE;
+        
       state.DONE:
         read_enable = 1;
         correct.d = 1; // reset

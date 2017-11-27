@@ -3,8 +3,8 @@
   <files>
     <src>board_generator.luc</src>
     <src>alu.luc</src>
-    <src>board_checker.luc</src>
     <src>alu_eightbitfa.luc</src>
+    <src>board_checker.luc</src>
     <src>board_manager.luc</src>
     <src>display.luc</src>
     <src top="true">mojo_top.luc</src>
