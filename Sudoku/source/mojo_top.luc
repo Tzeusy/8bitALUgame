@@ -10,10 +10,9 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst)) = {GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
-  board_generator gen(#ROW(ROW), #COL(COL));
   var i;
   
   .clk(clk) {
@@ -32,7 +31,7 @@ module mojo_top #(ROW=8, COL=8)(
     edge_detector col_detector(#RISE(1), #FALL(0));
     
     .rst(rst) {
-      prng prng;
+      board_generator gen(#ROW(ROW), #COL(COL));
       board_manager board_mgr(#ROW(ROW), #COL(COL));
       mask_manager mask_mgr(#ROW(ROW), #COL(COL));
       select_manager select_mgr;
@@ -54,11 +53,9 @@ module mojo_top #(ROW=8, COL=8)(
     toggle_detector.in = toggle_cond.out;
     check_detector.in = check_cond.out;
     rst = reset_cond.out;
-    // seeding prng
-    //prng.seed = io_dip[2];
-    prng.seed = 0;
-    // const value for board_generator
-    gen.n = prng.value[1:0];
+    // default variables for board_generator
+    gen.en = 0;
+    gen.n = 2b0;
     // default variables for board_manager
     board_mgr.write = 0;
     board_mgr.toggle = 0;
@@ -84,14 +81,22 @@ module mojo_top #(ROW=8, COL=8)(
     led_strip = display.out;
     
     case (state.q) {
-      state.GET_PRNG:
-        // wait for prng to complete its calculations
-        if (prng.read_enable) state.d = state.INIT_BOARD;
+      state.GET_DIFFICULTY:
+        display.data = gen.select_difficulty;
+        display.init = gen.empty;
+        if (col_button[0] | col_button[2] | col_button[4] | col_button[6]) {
+          gen.en = 1;
+          state.d = state.INIT_BOARD;
+        }
+        if (col_button[6]) gen.n = 2d0;
+        else if (col_button[4]) gen.n = 2d1;
+        else if (col_button[2]) gen.n = 2d2;
+        else if (col_button[0]) gen.n = 2d3;
       state.INIT_BOARD:
         // writes initial board to the manager
         board_mgr.write = 1;
         board_mgr.data = gen.init;
-        state.d = state.WAIT;
+        if (!|col_button) state.d = state.WAIT; // wait for button release
       state.WAIT:
         mask_mgr.write_state = 2b00;
         
@@ -194,6 +199,7 @@ module mojo_top #(ROW=8, COL=8)(
         wrong_counter.d = wrong_counter.q + 1;
         if (wrong_counter.q == 25h1ffffff) state.d = state.WAIT;
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
+        display.init = gen.empty;
       state.DONE:
         display.data = gen.no_toggle;
         display.mask = gen.mask;

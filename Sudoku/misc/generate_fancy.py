@@ -1,7 +1,5 @@
 def char_to_num(c):
-    if c == '-': return "2d0"
-    if c == '0': return "2d2"
-    if c == '1': return "2d3"
+    return "3d" + c
 
 def make_board(l):
     assert len(l) == 8
@@ -19,10 +17,6 @@ def print_board(filename):
     print(make_board(s.strip().split("\n")))
 
 if __name__ == "__main__":
-    for f in ["boards/easy_board.txt", "boards/easy_ans.txt",
-              "boards/medium_board.txt", "boards/medium_ans.txt",
-              "boards/hard_board.txt", "boards/hard_ans.txt",
-              "boards/very_hard_board.txt", "boards/very_hard_ans.txt",
-              "boards/select_difficulty.txt"]:
+    for f in ["boards/fancy.txt"]:
         print(f)
         print_board(f)

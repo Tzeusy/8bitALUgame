@@ -1,13 +1,18 @@
 module board_generator #(ROW=8, COL=8)(
+    input clk,
+    input rst,
+    input en,
     input n[2],
     output init[ROW][COL][2],
     output ans[ROW][COL][2],
+    output mask[ROW][COL][1],
+    output select_difficulty[ROW][COL][2],
     output empty[ROW][COL][2], // board of all 0s
     output wrong[ROW][COL][2], // board of all 1s (red)
-    output no_toggle[ROW][COL][2], // board to show when toggling is blocked
-    output mask[ROW][COL][1]
+    output no_toggle[ROW][COL][2] // board to show when toggling is blocked
   ) {
 
+  dff difficulty[2](.clk(clk), .rst(rst));
   sig init_boards[4][ROW][COL][2];
   sig ans_boards[4][ROW][COL][2];
   // temp variables to do things with boards
@@ -18,6 +23,8 @@ module board_generator #(ROW=8, COL=8)(
   var i, j;
 
   always {
+    if (en) difficulty.d = n;
+    
     init_boards[0] = {
       {2d0,2d3,2d3,2d0,2d0,2d0,2d3,2d0},
       {2d0,2d3,2d0,2d0,2d2,2d0,2d0,2d3},
@@ -102,8 +109,19 @@ module board_generator #(ROW=8, COL=8)(
       {2d3,2d2,2d2,2d3,2d3,2d2,2d2,2d3}
     };
     
-    init = init_boards[n];
-    ans = ans_boards[n];
+    init = init_boards[difficulty.q];
+    ans = ans_boards[difficulty.q];
+    
+    select_difficulty = {
+      {2d0,2d2,2d0,2d2,2d0,2d2,2d0,2d2},
+      {2d0,2d0,2d0,2d2,2d0,2d2,2d0,2d2},
+      {2d0,2d0,2d0,2d0,2d0,2d2,2d0,2d2},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d2},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0},
+      {2d0,2d0,2d0,2d0,2d0,2d0,2d0,2d0}
+  };
 
     for (i=0; i<ROW; i++) 
       for (j=0; j<COL; j++) {
