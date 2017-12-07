@@ -11,8 +11,14 @@ module mojo_top #(ROW=8, COL=8)(
     //input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     //input avr_rx_busy,      // AVR RX buffer full
-    input io_dip [3][8],    // DIP switches on IO Shield
-    input io_button[5],
+    //input io_dip [3][8],    // DIP switches on IO Shield
+    //input io_button[5],
+    
+    input col_button[8],
+    input row_button[8],
+    input toggle_button,
+    input check_button,
+    input reset_button,
     output led_strip[ROW]
   ) {
   
@@ -28,10 +34,10 @@ module mojo_top #(ROW=8, COL=8)(
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     
-    button_conditioner toggle_conditioner;
-    button_conditioner check_conditioner;
-    button_conditioner row_conditioner;
-    button_conditioner col_conditioner;
+    button_conditioner toggle_cond;
+    button_conditioner check_cond;
+    button_conditioner row_cond;
+    button_conditioner col_cond;
     // edge detectors for button conditioners - {toggle, check, row[0-7], col[0-7]}
     edge_detector toggle_detector(#RISE(1), #FALL(0));
     edge_detector check_detector(#RISE(1), #FALL(0));
@@ -52,17 +58,23 @@ module mojo_top #(ROW=8, COL=8)(
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
     // initializing button conditioners
-    toggle_conditioner.in = io_button[1]; // toggle_button_cond.in = toggle_button;
-    check_conditioner.in = io_button[4];
-    row_conditioner.in = |io_dip[0];
-    col_conditioner.in = |io_dip[1];
+    //toggle_cond.in = io_button[1];
+    //check_cond.in = io_button[4];
+    //row_cond.in = |io_dip[0];
+    //col_cond.in = |io_dip[1];
+    toggle_cond.in = toggle_button;
+    check_cond.in = check_button;
+    row_cond.in = |row_button;
+    col_cond.in = |col_button;
+    // reset_cond.in = reset_button;
     // initializing edge detectors
-    toggle_detector.in = toggle_conditioner.out;
-    check_detector.in = check_conditioner.out;
-    row_detector.in = row_conditioner.out;
-    col_detector.in = col_conditioner.out;
+    toggle_detector.in = toggle_cond.out;
+    check_detector.in = check_cond.out;
+    row_detector.in = row_cond.out;
+    col_detector.in = col_cond.out;
     // seeding prng
-    prng.seed = io_dip[2];
+    //prng.seed = io_dip[2];
+    prng.seed = 0;
     // const value for board_generator
     gen.n = prng.value[1:0];
     // default variables for board_manager
@@ -102,15 +114,17 @@ module mojo_top #(ROW=8, COL=8)(
         
         if (check_detector.out) state.d = state.CHECK;        
         else if (row_detector.out) {
-          for (i=0; i<ROW; i++) if (io_dip[0][i]) select_mgr.row_in = i;
+          for (i=0; i<ROW; i++) if (row_button[i]) select_mgr.row_in = i;
           select_mgr.write_row = 1;
           state.d = state.ROW_SELECTED;
         }
         else if (col_detector.out) {
-          for (i=0; i<COL; i++) if (io_dip[1][i]) select_mgr.col_in = i;
+          for (i=0; i<COL; i++) if (col_button[i]) select_mgr.col_in = i;
           select_mgr.write_col = 1;
           state.d = state.COL_SELECTED;
         }
+        // for led testing
+        if (reset_button) state.d = state.DONE;
       state.ROW_SELECTED:
         mask_mgr.write_state = 2b01;
         mask_mgr.row = select_mgr.row_out;
@@ -118,7 +132,7 @@ module mojo_top #(ROW=8, COL=8)(
         if (check_detector.out) state.d = state.CHECK;
         else if (row_detector.out) { // if same row, return to state.WAIT, else change row
           for (i=0; i<ROW; i++) 
-            if (io_dip[0][i]) {
+            if (row_button[i]) {
               if (select_mgr.row_out == i) state.d = state.WAIT;
               else {
                 select_mgr.row_in = i;
@@ -127,7 +141,7 @@ module mojo_top #(ROW=8, COL=8)(
             }
         }
         else if (col_detector.out) { // set col, go to state.BOTH_SELECTED
-          for (i=0; i<COL; i++) if (io_dip[1][i]) select_mgr.col_in = i;
+          for (i=0; i<COL; i++) if (col_button[i]) select_mgr.col_in = i;
           select_mgr.write_col = 1;
           state.d = state.BOTH_SELECTED;
         }
@@ -137,13 +151,13 @@ module mojo_top #(ROW=8, COL=8)(
         
         if (check_detector.out) state.d = state.CHECK;
         else if (row_detector.out) { // set row, go to state.BOTH_SELECTED
-          for (i=0; i<ROW; i++) if (io_dip[0][i]) select_mgr.row_in = i;
+          for (i=0; i<ROW; i++) if (row_button[i]) select_mgr.row_in = i;
           select_mgr.write_row = 1;
           state.d = state.BOTH_SELECTED;
         }
         else if (col_detector.out) { // if same col, return to state.WAIT, else change col
           for (i=0; i<COL; i++)
-            if (io_dip[1][i]) {
+            if (col_button[i]) {
               if (select_mgr.col_out == i) state.d = state.WAIT;
               else {
                 select_mgr.col_in = i;
@@ -167,7 +181,7 @@ module mojo_top #(ROW=8, COL=8)(
         }
         else if (row_detector.out) {
           for (i=0; i<ROW; i++)
-            if (io_dip[0][i]) {
+            if (row_button[i]) {
               if (select_mgr.row_out == i) state.d = state.WAIT;
               else {
                 select_mgr.row_in = i;
@@ -177,7 +191,7 @@ module mojo_top #(ROW=8, COL=8)(
         }
         else if (col_detector.out) {
           for (i=0; i<COL; i++)
-            if (io_dip[1][i]) {
+            if (col_button[i]) {
               if (select_mgr.col_out == i) state.d = state.WAIT;
               else {
                 select_mgr.col_in = i;

@@ -16,10 +16,13 @@ module display #(ROW=8, COL=8)(
   const NO_TOGGLE = 1;        // stealing spare numbers
   
   // preset colours (in GRB)
-  const COLOR_BLACK = 24b0;
-  const COLOR_RED = c{8d0, 8d31, 8d0};
-  const COLOR_GREEN = c{8d31, 8d0, 8d0};
-  const COLOR_BLUE = c{8d0, 8d0, 8d31};
+  const COLOR_BLACK = 24h0;
+  const COLOR_RED = c{8h00, 8hff, 8h00};
+  const COLOR_GREEN = c{8hff, 8h00, 8h00};
+  const COLOR_WHITE = c{8h40, 8h40, 8h40};
+  const COLOR_WHITE_RED = c{8h40, 8hff, 8h40};
+  const COLOR_WHITE_GREEN = c{8hff, 8h40, 8h40};
+  const COLOR_BLUE = c{8h00, 8h00, 8hff};
   // rainbow things
   const RED = c{8h00, 8hff, 8h00};
   const ORANGE = c{8h7f, 8hff, 8h00};
@@ -52,9 +55,9 @@ module display #(ROW=8, COL=8)(
           LED_OFF: grb = COLOR_BLACK;
           LED_0: grb = COLOR_RED;
           LED_1: grb = COLOR_GREEN;
-          LED_OFF_SELECTED: grb = c{8d31, 8d31, 8d31};
-          LED_0_SELECTED: grb = c{8d15, 8d31, 8d15};
-          LED_1_SELECTED: grb = c{8d63, 8d31, 8d31};
+          LED_OFF_SELECTED: grb = COLOR_WHITE;
+          LED_0_SELECTED: grb = COLOR_WHITE_RED;
+          LED_1_SELECTED: grb = COLOR_WHITE_GREEN;
           NO_TOGGLE: grb = COLOR_BLUE;
           default:
             temp = i + counter.q/(64*24); // (r + c)

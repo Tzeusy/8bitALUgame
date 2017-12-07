@@ -31,6 +31,7 @@ module board_checker #(ROW=8, COL=8)(
         alu.alufn = CMPEQ;
         // store (board[r][c] == ans[r][c])
         prev_result.d = alu.result[0];
+        state.d = state.ACCUMULATE;
 
       state.ACCUMULATE:
         alu.a = correct.q;

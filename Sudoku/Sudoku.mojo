@@ -3,8 +3,8 @@
   <files>
     <src>board_generator.luc</src>
     <src>alu.luc</src>
-    <src>alu_eightbitfa.luc</src>
     <src>board_checker.luc</src>
+    <src>alu_eightbitfa.luc</src>
     <src>board_manager.luc</src>
     <src>display.luc</src>
     <src top="true">mojo_top.luc</src>
@@ -15,6 +15,7 @@
     <src>board_select_manager.luc</src>
     <src>alu_boolean.luc</src>
     <src>board_mask_manager.luc</src>
+    <ucf>buttons.ucf</ucf>
     <ucf>io_shield.ucf</ucf>
     <ucf>led_strips.ucf</ucf>
     <ucf lib="true">mojo.ucf</ucf>
