@@ -1,19 +1,6 @@
 module mojo_top #(ROW=8, COL=8)(
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
-    output led [8],         // 8 user controllable LEDs
-    //input cclk,             // configuration clock, AVR ready when high
-    output spi_miso,        // AVR SPI MISO
-    //input spi_ss,           // AVR SPI Slave Select
-    //input spi_mosi,         // AVR SPI MOSI
-    //input spi_sck,          // AVR SPI Clock
-    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-    //input avr_tx,           // AVR TX (FPGA RX)
-    output avr_rx,          // AVR RX (FPGA TX)
-    //input avr_rx_busy,      // AVR RX buffer full
-    //input io_dip [3][8],    // DIP switches on IO Shield
-    //input io_button[5],
-    
     input col_button[8],
     input row_button[8],
     input toggle_button,
@@ -55,23 +42,18 @@ module mojo_top #(ROW=8, COL=8)(
   }
   
   always {
-    reset_cond.in = ~rst_n;   // input raw inverted reset signal
-    rst = reset_cond.out;     // conditioned reset
     // initializing button conditioners
-    //toggle_cond.in = io_button[1];
-    //check_cond.in = io_button[4];
-    //row_cond.in = |io_dip[0];
-    //col_cond.in = |io_dip[1];
-    toggle_cond.in = toggle_button;
-    check_cond.in = check_button;
     row_cond.in = |row_button;
     col_cond.in = |col_button;
-    // reset_cond.in = reset_button;
+    toggle_cond.in = toggle_button;
+    check_cond.in = check_button;
+    reset_cond.in = reset_button;
     // initializing edge detectors
-    toggle_detector.in = toggle_cond.out;
-    check_detector.in = check_cond.out;
     row_detector.in = row_cond.out;
     col_detector.in = col_cond.out;
+    toggle_detector.in = toggle_cond.out;
+    check_detector.in = check_cond.out;
+    rst = reset_cond.out;
     // seeding prng
     //prng.seed = io_dip[2];
     prng.seed = 0;
@@ -98,6 +80,7 @@ module mojo_top #(ROW=8, COL=8)(
     // const variables for display
     display.data = board_mgr.out;
     display.mask = mask_mgr.out;
+    display.init = gen.init;
     led_strip = display.out;
     
     case (state.q) {
@@ -124,7 +107,7 @@ module mojo_top #(ROW=8, COL=8)(
           state.d = state.COL_SELECTED;
         }
         // for led testing
-        if (reset_button) state.d = state.DONE;
+        if (~rst_n) state.d = state.DONE;
       state.ROW_SELECTED:
         mask_mgr.write_state = 2b01;
         mask_mgr.row = select_mgr.row_out;
@@ -186,6 +169,7 @@ module mojo_top #(ROW=8, COL=8)(
               else {
                 select_mgr.row_in = i;
                 select_mgr.write_row = 1;
+                state.d = state.ROW_SELECTED;
               }
             }
         }
@@ -196,6 +180,7 @@ module mojo_top #(ROW=8, COL=8)(
               else {
                 select_mgr.col_in = i;
                 select_mgr.write_col = 1;
+                state.d = state.COL_SELECTED;
               }
             }
         }
@@ -213,10 +198,5 @@ module mojo_top #(ROW=8, COL=8)(
         display.data = gen.no_toggle;
         display.mask = gen.mask;
     }
-    
-    led = 8h00;               // turn LEDs off
-    spi_miso = bz;            // not using SPI
-    spi_channel = bzzzz;      // not using flags
-    avr_rx = bz;              // not using serial port
   }    
 }
