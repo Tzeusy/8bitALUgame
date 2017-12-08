@@ -1,0 +1,85 @@
+module fancy_manager #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input row_button[ROW],
+    input col_button[COL],
+    input toggle,
+    output out[ROW][COL][3]
+  ) {
+  button_conditioner state_toggle_cond(.clk(clk));
+  edge_detector state_toggle_detector(.clk(clk));
+
+  dff clock_counter[24](.clk(clk), .rst(rst));
+  dff seven_counter[3](.clk(clk), .rst(rst));
+  fsm state(.clk(clk), .rst(rst), #INIT(STATIC)) = {STATIC, SCROLL, SQUARE, BISBAS};
+  sig static[ROW][COL][3];
+  sig scroll[ROW][COL][3];
+  sig square[ROW][COL][3];
+  var r, c, temp;
+
+  always {
+    // ========== BTNCON ==========
+    state_toggle_cond.in = col_button[0];
+    state_toggle_detector.in = state_toggle_cond.out;
+    
+    // ========== COUNTS ==========
+    clock_counter.d = clock_counter.q + 1;
+    if (clock_counter.q[22:0] == 23h7fffff) seven_counter.d = seven_counter.q+1 - ((seven_counter.q+1)/7*7); // cycle of 7
+    
+    // ========== STATIC ==========
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++ ) {
+        temp = r + c;
+        static[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== SCROLL ==========
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++) {
+        temp = static[r][c] + seven_counter.q;
+        scroll[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== SQUARE ==========
+    square = {
+      {3d3,3d3,3d3,3d3,3d3,3d3,3d3,3d3},
+      {3d3,3d2,3d2,3d2,3d2,3d2,3d2,3d3},
+      {3d3,3d2,3d1,3d1,3d1,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d0,3d0,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d0,3d0,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d1,3d1,3d1,3d2,3d3},
+      {3d3,3d2,3d2,3d2,3d2,3d2,3d2,3d3},
+      {3d3,3d3,3d3,3d3,3d3,3d3,3d3,3d3}
+    };
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++ ) {
+        temp = square[r][c] + seven_counter.q;
+        square[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== BISBAS ==========
+    
+    // ========= STATES ==========
+    if (state_toggle_detector.out) {
+      case (state.q) {
+        state.STATIC: state.d = state.SCROLL;
+        state.SCROLL: state.d = state.SQUARE;
+        state.SQUARE: state.d = state.BISBAS;          
+        default: state.d = state.STATIC;
+      }
+      clock_counter.d = 0; // reset clock counter when change of state
+      seven_counter.d = 0; // reset seven counter too
+    }
+    
+    // ========== OUTPUT ==========
+    case (state.q) {
+      state.STATIC: out = static;
+      state.SCROLL: out = scroll;
+      state.SQUARE: out = square;
+      default: out = static;
+    }
+  }
+}

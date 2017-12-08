@@ -10,7 +10,8 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, TEST_FANCY};
+  fsm state(.clk(clk), .rst(rst)) = {
+    GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   var i;
@@ -37,7 +38,9 @@ module mojo_top #(ROW=8, COL=8)(
       select_manager select_mgr;
       board_checker chkr(#ROW(ROW), #COL(COL));
       display display(#ROW(ROW), #COL(COL));
+      
       fancy_display fancy(#ROW(ROW), #COL(COL));
+      fancy_manager fancy_mgr(#ROW(ROW), #COL(COL));
     }
   }
   
@@ -81,7 +84,10 @@ module mojo_top #(ROW=8, COL=8)(
     display.init = gen.init;
     led_strip = display.out;
     // default variables for fancy
-    //fancy.data = gen.empty;
+    fancy_mgr.row_button = row_button;
+    fancy_mgr.col_button = col_button;
+    fancy_mgr.toggle = toggle_button;
+    fancy.data = fancy_mgr.out;
     
     case (state.q) {
       state.GET_DIFFICULTY:

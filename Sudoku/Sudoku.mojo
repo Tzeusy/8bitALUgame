@@ -12,6 +12,7 @@
     <src>prng.luc</src>
     <src>alu_comp.luc</src>
     <src>alu_shift.luc</src>
+    <src>fancy_manager.luc</src>
     <src>alu_fa.luc</src>
     <src>board_select_manager.luc</src>
     <src>alu_boolean.luc</src>
