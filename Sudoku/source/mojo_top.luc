@@ -10,7 +10,7 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst)) = {GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, TEST_FANCY};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   var i;
@@ -37,6 +37,7 @@ module mojo_top #(ROW=8, COL=8)(
       select_manager select_mgr;
       board_checker chkr(#ROW(ROW), #COL(COL));
       display display(#ROW(ROW), #COL(COL));
+      fancy_display fancy(#ROW(ROW), #COL(COL));
     }
   }
   
@@ -79,24 +80,26 @@ module mojo_top #(ROW=8, COL=8)(
     display.mask = mask_mgr.out;
     display.init = gen.init;
     led_strip = display.out;
+    // default variables for fancy
+    //fancy.data = gen.empty;
     
     case (state.q) {
       state.GET_DIFFICULTY:
         display.data = gen.select_difficulty;
-        display.init = gen.empty;
-        if (col_button[0] | col_button[2] | col_button[4] | col_button[6]) {
+        display.init = gen.no_toggle; // set to all ones so that it would be the bright version
+        if (|col_button) {
           gen.en = 1;
           state.d = state.INIT_BOARD;
         }
-        if (col_button[6]) gen.n = 2d0;
-        else if (col_button[4]) gen.n = 2d1;
-        else if (col_button[2]) gen.n = 2d2;
-        else if (col_button[0]) gen.n = 2d3;
+        if (col_button[6] || col_button[7]) gen.n = 2d0;
+        else if (col_button[4] || col_button[5]) gen.n = 2d1;
+        else if (col_button[2] || col_button[3]) gen.n = 2d2;
+        else if (col_button[0] || col_button[1]) gen.n = 2d3;
       state.INIT_BOARD:
         // writes initial board to the manager
         board_mgr.write = 1;
         board_mgr.data = gen.init;
-        if (!|col_button) state.d = state.WAIT; // wait for button release
+        if (!(|col_button)) state.d = state.WAIT; // wait for button release
       state.WAIT:
         mask_mgr.write_state = 2b00;
         
@@ -111,8 +114,9 @@ module mojo_top #(ROW=8, COL=8)(
           select_mgr.write_col = 1;
           state.d = state.COL_SELECTED;
         }
-        // for led testing
+        // SNEAKY
         if (~rst_n) state.d = state.DONE;
+        if (toggle_cond.out && check_cond.out) state.d = state.DONE;
       state.ROW_SELECTED:
         mask_mgr.write_state = 2b01;
         mask_mgr.row = select_mgr.row_out;
@@ -199,10 +203,9 @@ module mojo_top #(ROW=8, COL=8)(
         wrong_counter.d = wrong_counter.q + 1;
         if (wrong_counter.q == 25h1ffffff) state.d = state.WAIT;
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
-        display.init = gen.empty;
+        display.init = gen.no_toggle; // again set to all ones for bright version
       state.DONE:
-        display.data = gen.no_toggle;
-        display.mask = gen.mask;
+        led_strip = fancy.out;
     }
   }    
 }

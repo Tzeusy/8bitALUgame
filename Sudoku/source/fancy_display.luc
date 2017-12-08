@@ -1,0 +1,41 @@
+module fancy_display #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    //input data[ROW][COL][3],
+    output out[ROW]
+  ) {
+  
+  const RED = c{8h00, 8hff, 8h00};
+  const ORANGE = c{8h7f, 8hff, 8h00};
+  const YELLOW = c{8hff, 8hff, 8h00};
+  const GREEN = c{8hff, 8h00, 8h00};
+  const BLUE = c{8h00, 8h00, 8hff};
+  const INDIGO = c{8h00, 8h4b, 8h82};
+  const VIOLET = c{8h00, 8h94, 8hd3};
+  const RAINBOW = {VIOLET, INDIGO, BLUE, GREEN, YELLOW, ORANGE, RED};
+  
+  dff counter[14](.clk(clk), .rst(rst)); // 1 complete cycle of counter corresponds to 1 row
+  sig foo[11]; // temp variable to store (n % 1536), which yields the column to be rendered
+  sig grb[24]; // temp variable to store the GRB values for LED given its led_state
+  var r, c, temp;
+
+  always {
+    out = 0;
+    for (r=0; r<ROW; r++) {
+      if (counter.q < 64*24*8) {
+        c = counter.q/(64*24);
+        temp = r + c;
+        grb = RAINBOW[temp - ((temp/7)*7)];
+        
+        foo = counter.q - ((counter.q/(64*24))*(64*24));
+        if (grb[23-(foo>>6)] == 0) {
+          if (foo[5:0] < 20) out[r] = 1;
+        }
+        else {
+          if (foo[5:0] < 40) out[r] = 1;
+        }
+      }
+    }
+    counter.d = counter.q + 1;
+  }
+}
