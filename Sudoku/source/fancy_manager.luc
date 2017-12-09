@@ -82,6 +82,7 @@ module fancy_manager #(ROW=8, COL=8)(
     if (state.q == state.CONWAY_INIT_TOP) {
       for (r=0; r<ROW/2; r++) conway_temp[r] = pn_gen.num[(r*COL)+:COL]; // grab slices of 8 and put them into conway_temp
       for (r=0; r<ROW/2; r++) for (c=0; c<COL; c++) conway.d[r][c] = conway_temp[r][c] ? CONWAY_LIVE : CONWAY_DEAD; // 0 - black, 1 - green
+      for (r=ROW/2; r<ROW; r++) for (c=0; c<COL;c ++) conway.d[r][c] = CONWAY_DEAD;
       state.d = state.CONWAY_INIT_BTM;
     }
     else if (state.q == state.CONWAY_INIT_BTM) {
@@ -95,29 +96,29 @@ module fancy_manager #(ROW=8, COL=8)(
           for (c=0; c<COL; c++) {
             temp = 0;
             // count neighbours
-            if (r != 0) {
+            if (r > 0) {
               temp = temp + (conway.q[r-1][c] == CONWAY_LIVE); // top
               if (c != 0) temp = temp + (conway.q[r-1][c-1] == CONWAY_LIVE); // top-left
               if (c != COL-1) temp = temp + (conway.q[r-1][c+1] == CONWAY_LIVE); // top-right
             }
-            if (r != ROW-1) {
+            if (r < ROW-1) {
               temp = temp + (conway.q[r+1][c] == CONWAY_LIVE); // btm
               if (c != 0) temp = temp + (conway.q[r+1][c-1] == CONWAY_LIVE); // btm-left
               if (c != COL-1) temp = temp + (conway.q[r+1][c+1] == CONWAY_LIVE); // btm-right
             }
-            if (c != 0) temp = temp + (conway.q[r][c-1] == CONWAY_LIVE); // left
-            if (c != COL-1) temp = temp + (conway.q[r][c+1] == CONWAY_LIVE); // right
+            if (c > 0) temp = temp + (conway.q[r][c-1] == CONWAY_LIVE); // left
+            if (c < COL-1) temp = temp + (conway.q[r][c+1] == CONWAY_LIVE); // right
             // determine living factor
             if (conway.q[r][c] == CONWAY_LIVE) { // if alive
-              if (temp < 2) conway_temp[r][c] = 0; // underpopulation
-              else if (temp > 3) conway_temp[r][c] = 0; // overpopulation
-              else conway_temp[r][c] = 1;
+              if (temp < 2) conway.d[r][c] = CONWAY_DEAD; // underpopulation
+              else if (temp > 3) conway.d[r][c] = CONWAY_DEAD; // overpopulation
+              else conway.d[r][c] = CONWAY_LIVE;
             }
-            else if (temp == 3) conway_temp[r][c] = 1; // dead + 3 neighbours
+            else {
+              if (temp == 3) conway.d[r][c] = CONWAY_LIVE; // dead + 3 neighbours
+            }
           }
         }
-        // load conway_temp into dff
-        for (r=0; r<ROW; r++) for (c=0; c<COL; c++) conway.d[r][c] = conway_temp[r][c] ? CONWAY_LIVE : CONWAY_DEAD;
       }
       if (toggle_button_detector.out) state.d = state.CONWAY_INIT_TOP;
     }
