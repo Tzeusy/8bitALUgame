@@ -86,7 +86,7 @@ module mojo_top #(ROW=8, COL=8)(
     // default variables for fancy
     fancy_mgr.row_button = row_button;
     fancy_mgr.col_button = col_button;
-    fancy_mgr.toggle = toggle_button;
+    fancy_mgr.toggle_button = toggle_button;
     fancy.data = fancy_mgr.out;
     
     case (state.q) {
