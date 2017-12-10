@@ -6,7 +6,7 @@ def char_to_num(c):
 def make_board(l):
     assert len(l) == 8
     s = ""
-    for line in l:
+    for line in l[::-1]: # flip so that it becomes upside down
         assert len(line) == 8
         s+= "      {"
         s+= ",".join(map(char_to_num, line))
@@ -23,6 +23,7 @@ if __name__ == "__main__":
               "boards/medium_board.txt", "boards/medium_ans.txt",
               "boards/hard_board.txt", "boards/hard_ans.txt",
               "boards/very_hard_board.txt", "boards/very_hard_ans.txt",
-              "boards/select_difficulty.txt"]:
+              "boards/select_difficulty.txt",
+              "boards/difficulty_1.txt", "boards/difficulty_2.txt", "boards/difficulty_3.txt", "boards/difficulty_4.txt"]:
         print(f)
         print_board(f)

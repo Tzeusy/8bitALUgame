@@ -10,8 +10,7 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {
-    GET_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, GAME};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   var i;
@@ -39,8 +38,9 @@ module mojo_top #(ROW=8, COL=8)(
       board_checker chkr(#ROW(ROW), #COL(COL));
       display display(#ROW(ROW), #COL(COL));
       
-      fancy_display fancy(#ROW(ROW), #COL(COL));
+      fancy_display fancy_display(#ROW(ROW), #COL(COL));
       fancy_manager fancy_mgr(#ROW(ROW), #COL(COL));
+      fancy_bisbas bisbas(#ROW(ROW), #COL(COL));
     }
   }
   
@@ -59,6 +59,7 @@ module mojo_top #(ROW=8, COL=8)(
     rst = reset_cond.out;
     // default variables for board_generator
     gen.en = 0;
+    gen.increase_difficulty = 0;
     gen.n = 2b0;
     // default variables for board_manager
     board_mgr.write = 0;
@@ -84,10 +85,12 @@ module mojo_top #(ROW=8, COL=8)(
     display.init = gen.init;
     led_strip = display.out;
     // default variables for fancy
-    fancy_mgr.row_button = row_button;
+    bisbas.start = 0;
+    bisbas.p1_button = col_button[7:4];
+    bisbas.p2_button = row_button[3:0];
+    bisbas.replay = toggle_detector.out;
     fancy_mgr.col_button = col_button;
-    fancy_mgr.toggle_button = toggle_button;
-    fancy.data = fancy_mgr.out;
+    fancy_display.data = fancy_mgr.out;
     
     case (state.q) {
       state.GET_DIFFICULTY:
@@ -101,6 +104,11 @@ module mojo_top #(ROW=8, COL=8)(
         else if (col_button[4] || col_button[5]) gen.n = 2d1;
         else if (col_button[2] || col_button[3]) gen.n = 2d2;
         else if (col_button[0] || col_button[1]) gen.n = 2d3;
+      state.SELECT_DIFFICULTY:
+        display.data = gen.difficulty_board;
+        display.init = gen.no_toggle;
+        if (check_detector.out) gen.increase_difficulty = 1;
+        if (toggle_detector.out) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
         // writes initial board to the manager
         board_mgr.write = 1;
@@ -211,7 +219,14 @@ module mojo_top #(ROW=8, COL=8)(
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
         display.init = gen.no_toggle; // again set to all ones for bright version
       state.DONE:
-        led_strip = fancy.out;
+        led_strip = fancy_display.out;
+        if (col_detector.out) if (col_button[0]) {
+          state.d = state.GAME;
+          bisbas.start = 1;
+        }
+      state.GAME:
+        fancy_display.data = bisbas.out;
+        led_strip = fancy_display.out;
     }
   }    
 }

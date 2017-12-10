@@ -7,6 +7,7 @@
     <src>board_checker.luc</src>
     <src>alu_eightbitfa.luc</src>
     <src>board_manager.luc</src>
+    <src>fancy_bisbas.luc</src>
     <src>display.luc</src>
     <src top="true">mojo_top.luc</src>
     <src>prng.luc</src>

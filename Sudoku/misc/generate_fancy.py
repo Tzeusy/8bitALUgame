@@ -4,7 +4,7 @@ def char_to_num(c):
 def make_board(l):
     assert len(l) == 8
     s = ""
-    for line in l:
+    for line in l[::-1]:
         assert len(line) == 8
         s+= "      {"
         s+= ",".join(map(char_to_num, line))
@@ -17,6 +17,7 @@ def print_board(filename):
     print(make_board(s.strip().split("\n")))
 
 if __name__ == "__main__":
-    for f in ["boards/fancy.txt"]:
+    for f in ["boards/fancy.txt",
+              "boards/countdown_1.txt", "boards/countdown_2.txt", "boards/countdown_3.txt"]:
         print(f)
         print_board(f)
