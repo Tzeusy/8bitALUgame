@@ -10,7 +10,7 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, BISBAS, TAPTAP};
+  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, GRADIENT, BISBAS, TAPTAP};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   var i;
@@ -38,6 +38,7 @@ module mojo_top #(ROW=8, COL=8)(
       board_checker chkr(#ROW(ROW), #COL(COL));
       display display(#ROW(ROW), #COL(COL));
       
+      display_gradient display_gradient(#ROW(ROW));
       fancy_display fancy_display(#ROW(ROW), #COL(COL));
       fancy_manager fancy_mgr(#ROW(ROW), #COL(COL));
       fancy_bisbas bisbas(#ROW(ROW), #COL(COL));
@@ -227,6 +228,10 @@ module mojo_top #(ROW=8, COL=8)(
           state.d = state.BISBAS;
           bisbas.start = 1;
         }
+        if (col_detector.out && col_button[0]) state.d = state.GRADIENT;
+      state.GRADIENT:
+        led_strip = display_gradient.out;
+        if (col_detector.out && col_button[0]) state.d = state.DONE;
       state.BISBAS:
         fancy_display.data = bisbas.out;
         led_strip = fancy_display.out;
