@@ -12,6 +12,7 @@
     <src top="true">mojo_top.luc</src>
     <src>prng.luc</src>
     <src>alu_comp.luc</src>
+    <src>fancy_taptap.luc</src>
     <src>alu_shift.luc</src>
     <src>fancy_manager.luc</src>
     <src>alu_fa.luc</src>

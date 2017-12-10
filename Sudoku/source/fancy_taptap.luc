@@ -1,0 +1,98 @@
+module fancy_taptap #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input start,
+    input buttons[8],
+    output out[ROW][COL][3]
+  ) {
+  
+  const COLOR_BLANK = 3d7;
+  const COLOR_ON = 3d1;
+  const COLOR_HIT = 3d3;
+  const COLOR_MISS = 3d0;
+  
+  pn_gen pn_gen(.clk(clk), .rst(rst));
+  
+  button_conditioner c0(.clk(clk));
+  button_conditioner c1(.clk(clk));
+  button_conditioner c2(.clk(clk));
+  button_conditioner c3(.clk(clk));
+  button_conditioner c4(.clk(clk));
+  button_conditioner c5(.clk(clk));
+  button_conditioner c6(.clk(clk));
+  button_conditioner c7(.clk(clk));
+  
+  edge_detector ed0(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed1(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed2(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed3(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed4(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed5(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed6(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector ed7(.clk(clk), #RISE(1), #FALL(0));
+  
+  fsm state(.clk(clk), .rst(rst)) = {INIT, PLAY, HIT, MISS};
+  dff counter[24](.clk(clk), .rst(rst));
+  dff flash_counter[23](.clk(clk), .rst(rst));
+  dff board[ROW][COL][3](.clk(clk), .rst(rst));
+  dff col[3](.clk(clk), .rst(rst));
+  var r, c;
+
+  always {
+    pn_gen.seed = 0;
+    pn_gen.next = 1;
+    
+    c0.in = buttons[0]; c1.in = buttons[1]; c2.in = buttons[2]; c3.in = buttons[3]; c4.in = buttons[4]; c5.in = buttons[5]; c6.in = buttons[6]; c7.in = buttons[7];
+    ed0.in = c0.out; ed1.in = c1.out; ed2.in = c2.out; ed3.in = c3.out; ed4.in = c4.out; ed5.in = c5.out; ed6.in = c6.out; ed7.in = c7.out;
+    
+    out = board.q;
+    counter.d = counter.q + 1;
+    if (start) state.d = state.INIT;
+    
+    case (state.q) {
+      state.INIT:
+        counter.d = 0;
+        for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = COLOR_BLANK;
+        state.d = state.PLAY;
+      state.PLAY:
+        if (ed0.out) { state.d = (board.q[ROW-1][0] == COLOR_ON) ? state.HIT : state.MISS; col.d = 0; }
+        if (ed1.out) { state.d = (board.q[ROW-1][1] == COLOR_ON) ? state.HIT : state.MISS; col.d = 1; }
+        if (ed2.out) { state.d = (board.q[ROW-1][2] == COLOR_ON) ? state.HIT : state.MISS; col.d = 2; }
+        if (ed3.out) { state.d = (board.q[ROW-1][3] == COLOR_ON) ? state.HIT : state.MISS; col.d = 3; }
+        if (ed4.out) { state.d = (board.q[ROW-1][4] == COLOR_ON) ? state.HIT : state.MISS; col.d = 4; }
+        if (ed5.out) { state.d = (board.q[ROW-1][5] == COLOR_ON) ? state.HIT : state.MISS; col.d = 5; }
+        if (ed6.out) { state.d = (board.q[ROW-1][6] == COLOR_ON) ? state.HIT : state.MISS; col.d = 6; }
+        if (ed7.out) { state.d = (board.q[ROW-1][7] == COLOR_ON) ? state.HIT : state.MISS; col.d = 7; }
+        
+        // turn of the clock
+        if (counter.q == 24hffffff) {
+          // refresh board
+          for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = COLOR_BLANK;
+          // set new row
+          board.d[0][pn_gen.num[2:0]] = COLOR_ON;
+          // old rows move down
+          for (r=1; r<ROW; r++) for (c=0; c<COL; c++) {
+            board.d[r][c] = board.q[r-1][c];
+          }
+          // check for miss
+          for (c=0; c<COL; c++) {
+            if (board.q[ROW-1][c] != COLOR_BLANK) {
+              col.d = c;
+              state.d = state.MISS;
+            }
+          }
+        }
+      state.HIT:
+        counter.d = counter.q; // pause the normal game
+        flash_counter.d = flash_counter.q + 1;
+        if (flash_counter.q == 23h7fffff) state.d = state.PLAY;
+        for (c=0; c<COL; c++) board.d[ROW-1][c] = COLOR_BLANK;
+        for (r=0; r<ROW; r++) out[r][col.q] = COLOR_HIT;
+      state.MISS:
+        counter.d = counter.q;
+        flash_counter.d = flash_counter.q + 1;
+        if (flash_counter.q == 23h7fffff) state.d = state.PLAY;
+        for (r=0; r<ROW; r++) out[r][col.q] = COLOR_MISS;
+    }
+  }
+}
