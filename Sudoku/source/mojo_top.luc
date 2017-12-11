@@ -94,6 +94,7 @@ module mojo_top #(ROW=8, COL=8)(
     taptap.start = 0;
     taptap.buttons = col_button;
     fancy_mgr.col_button = col_button;
+    fancy_mgr.conway_static_en = toggle_detector.out;
     fancy_display.data = fancy_mgr.out;
     
     case (state.q) {
