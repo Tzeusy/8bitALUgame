@@ -10,6 +10,7 @@ module fancy_taptap #(ROW=8, COL=8)(
   const COLOR_ON = 3d1;
   const COLOR_HIT = 3d3;
   const COLOR_MISS = 3d0;
+  const COLOR_SCORE = 3d6;
   
   pn_gen pn_gen(.clk(clk), .rst(rst));
   
@@ -35,6 +36,7 @@ module fancy_taptap #(ROW=8, COL=8)(
   dff counter[24](.clk(clk), .rst(rst));
   dff flash_counter[23](.clk(clk), .rst(rst));
   dff board[ROW][COL][3](.clk(clk), .rst(rst));
+  dff score[COL](.clk(clk), .rst(rst));
   dff col[3](.clk(clk), .rst(rst));
   var r, c;
 
@@ -52,6 +54,7 @@ module fancy_taptap #(ROW=8, COL=8)(
     case (state.q) {
       state.INIT:
         counter.d = 0;
+        score.d = 0;
         for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = COLOR_BLANK;
         state.d = state.PLAY;
       state.PLAY:
@@ -83,16 +86,20 @@ module fancy_taptap #(ROW=8, COL=8)(
           }
         }
       state.HIT:
+        if (flash_counter.q == 0) score.d = score.q + 1;
         counter.d = counter.q; // pause the normal game
         flash_counter.d = flash_counter.q + 1;
         if (flash_counter.q == 23h7fffff) state.d = state.PLAY;
         for (c=0; c<COL; c++) board.d[ROW-1][c] = COLOR_BLANK;
         for (r=0; r<ROW; r++) out[r][col.q] = COLOR_HIT;
       state.MISS:
+        if (flash_counter.q == 0) score.d = score.q > 0 ? score.q-1 : 0;
         counter.d = counter.q;
         flash_counter.d = flash_counter.q + 1;
         if (flash_counter.q == 23h7fffff) state.d = state.PLAY;
         for (r=0; r<ROW; r++) out[r][col.q] = COLOR_MISS;
     }
+    
+    for (c=0; c<COL; c++) out[0][c] = score.q[c] ? COLOR_SCORE : COLOR_BLANK;
   }
 }
