@@ -236,7 +236,7 @@ module mojo_top #(ROW=8, COL=8)(
           state.d = state.BISBAS;
           bisbas.start = 1;
         }
-        if (col_detector.out && col_button[7]) state.d = state.DONE;
+        if (col_detector.out && |col_button[7:3]) state.d = state.DONE;
       state.BISBAS:
         fancy_display.data = bisbas.out;
         led_strip = fancy_display.out;

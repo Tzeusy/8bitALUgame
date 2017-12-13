@@ -116,17 +116,17 @@ module fancy_bisbas #(ROW=8, COL=8)(
         for (i=0; i<z2.q; i++) board.d[0][i] = COLOR_4;
         
         if (p1_detector.out) {
-          if (p1_button[3]) w1.d = w1.q - 1;
-          if (p1_button[2]) x1.d = x1.q - 1;
-          if (p1_button[1]) y1.d = y1.q - 1;
-          if (p1_button[0]) z1.d = z1.q - 1;
+          if (p1_button[3]) w1.d = w1.q == 0 ? 4 : w1.q - 1;
+          if (p1_button[2]) x1.d = x1.q == 0 ? 4 : x1.q - 1;
+          if (p1_button[1]) y1.d = y1.q == 0 ? 4 : y1.q - 1;
+          if (p1_button[0]) z1.d = z1.q == 0 ? 4 : z1.q - 1;
         }
         
         if (p2_detector.out) {
-          if (p2_button[3]) w2.d = w2.q - 1;
-          if (p2_button[2]) x2.d = x2.q - 1;
-          if (p2_button[1]) y2.d = y2.q - 1;
-          if (p2_button[0]) z2.d = z2.q - 1;
+          if (p2_button[3]) w2.d = w2.q == 0 ? 4 : w2.q - 1;
+          if (p2_button[2]) x2.d = x2.q == 0 ? 4 : x2.q - 1;
+          if (p2_button[1]) y2.d = y2.q == 0 ? 4 : y2.q - 1;
+          if (p2_button[0]) z2.d = z2.q == 0 ? 4 : z2.q - 1;
         }
         
         if (w1.q == 0 && x1.q == 0 && y1.q == 0 && z1.q == 0) state.d = state.P1_WIN;
