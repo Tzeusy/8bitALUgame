@@ -10,7 +10,7 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, GRADIENT, BISBAS, TAPTAP};
+  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, FANCY, GRADIENT, BISBAS, TAPTAP};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
   var i;
@@ -93,6 +93,7 @@ module mojo_top #(ROW=8, COL=8)(
     bisbas.replay = toggle_detector.out;
     taptap.start = 0;
     taptap.buttons = col_button;
+    fancy_mgr.start = 0;
     fancy_mgr.col_button = col_button;
     fancy_mgr.conway_static_en = toggle_detector.out;
     fancy_display.data = fancy_mgr.out;
@@ -224,6 +225,9 @@ module mojo_top #(ROW=8, COL=8)(
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
         display.init = gen.no_toggle; // again set to all ones for bright version
       state.DONE:
+        fancy_mgr.start = 1; // reset fancy manager to static display before displaying
+        state.d = state.FANCY;
+      state.FANCY:
         led_strip = fancy_display.out;
         if (check_detector.out) {
           state.d = state.BISBAS;

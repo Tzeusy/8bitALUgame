@@ -1,6 +1,7 @@
 module fancy_manager #(ROW=8, COL=8)(
     input clk,  // clock
     input rst,  // reset
+    input start,
     input col_button[COL],
     input conway_static_en,
     output out[ROW][COL][3]
@@ -26,6 +27,7 @@ module fancy_manager #(ROW=8, COL=8)(
   var r, c, temp;
 
   always {
+    if (start) state.d = state.STATIC;
     // ========== PN_GEN ==========
     pn_gen.seed = 0;
     pn_gen.next = 1;
