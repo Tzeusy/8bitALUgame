@@ -1,0 +1,159 @@
+module fancy_bisbas #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input start,
+    input replay,
+    input p1_button[4],
+    input p2_button[4],
+    output out[ROW][COL][3]
+  ) {
+  
+  pn_gen pn_gen(.clk(clk), .rst(rst));
+  button_conditioner p1_cond(.clk(clk));
+  button_conditioner p2_cond(.clk(clk));
+  edge_detector p1_detector(.clk(clk), #RISE(1), #FALL(0));
+  edge_detector p2_detector(.clk(clk), #RISE(1), #FALL(0));
+  
+  const COLOR_BLANK = 3d7;
+  const COLOR_1 = 3d0;
+  const COLOR_2 = 3d3;
+  const COLOR_3 = 3d4;
+  const COLOR_4 = 3d2;
+  const P1_COLOR = 3d1;
+  const P2_COLOR = 3d6;
+  
+  fsm state(.clk(clk), .rst(rst)) = {INIT, COUNTDOWN_3, COUNTDOWN_2, COUNTDOWN_1, INIT_STAGE, PLAY, P1_WIN, P2_WIN, PRE_END_STAGE, END_STAGE, P1_GAME, P2_GAME};
+  dff counter[25](.clk(clk), .rst(rst));
+  dff board[ROW][COL][3](.clk(clk), .rst(rst));
+  dff p1_score[2](.clk(clk), .rst(rst)); dff p2_score[2](.clk(clk), .rst(rst));
+  dff w1[3](.clk(clk), .rst(rst)); dff x1[3](.clk(clk), .rst(rst)); dff y1[3](.clk(clk), .rst(rst)); dff z1[3](.clk(clk), .rst(rst));
+  dff w2[3](.clk(clk), .rst(rst)); dff x2[3](.clk(clk), .rst(rst)); dff y2[3](.clk(clk), .rst(rst)); dff z2[3](.clk(clk), .rst(rst));
+  var i, r, c;
+
+  always {
+    pn_gen.seed = 0;
+    pn_gen.next = 1;
+    
+    p1_cond.in = |p1_button;
+    p2_cond.in = |p2_button;
+    p1_detector.in = p1_cond.out;
+    p2_detector.in = p2_cond.out;
+    
+    out = board.q;
+    counter.d = counter.q + 1;
+    
+    if (start) state.d = state.INIT;
+
+    case (state.q) {
+      state.INIT:
+        counter.d = 0;
+        p1_score.d = 0;
+        p2_score.d = 0;
+        for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = COLOR_BLANK;
+        state.d = state.COUNTDOWN_3;
+      state.COUNTDOWN_3:
+        out = {
+          {3d7,3d7,3d0,3d0,3d0,3d0,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d0,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d0,3d7,3d7},
+          {3d7,3d7,3d0,3d0,3d0,3d0,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d0,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d0,3d7,3d7},
+          {3d7,3d7,3d0,3d0,3d0,3d0,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d7,3d7,3d7}
+        };
+        if (counter.q == 25h1ffffff) state.d = state.COUNTDOWN_2;
+      state.COUNTDOWN_2:
+        out = {
+          {3d7,3d7,3d2,3d2,3d2,3d2,3d7,3d7},
+          {3d7,3d7,3d2,3d7,3d7,3d7,3d7,3d7},
+          {3d7,3d7,3d2,3d7,3d7,3d7,3d7,3d7},
+          {3d7,3d7,3d2,3d2,3d2,3d2,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d2,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d2,3d7,3d7},
+          {3d7,3d7,3d2,3d2,3d2,3d2,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d7,3d7,3d7}
+        };
+        if (counter.q == 25h1ffffff) state.d = state.COUNTDOWN_1;
+      state.COUNTDOWN_1:
+        out = {
+          {3d7,3d7,3d3,3d3,3d3,3d3,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d3,3d7,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d7,3d3,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d3,3d7,3d7,3d7},
+          {3d7,3d7,3d7,3d7,3d7,3d7,3d7,3d7}
+        };
+        if (counter.q == 25h1ffffff) state.d = state.INIT_STAGE;
+      state.INIT_STAGE:
+        w1.d = pn_gen.num[1:0] + 1;
+        w2.d = pn_gen.num[1:0] + 1;
+        
+        x2.d = pn_gen.num[3:2] + 1;
+        x1.d = pn_gen.num[3:2] + 1;
+        
+        y1.d = pn_gen.num[5:4] + 1;
+        y2.d = pn_gen.num[5:4] + 1;
+        
+        z1.d = pn_gen.num[7:6] + 1;
+        z2.d = pn_gen.num[7:6] + 1;
+        
+        state.d = state.PLAY;
+      state.PLAY:
+        for (r=4; r<ROW; r++) for (c=4; c<COL; c++) board.d[r][c] = COLOR_BLANK; // reset p1 display area
+        for (r=0; r<4; r++) for (c=0; c<4; c++) board.d[r][c] = COLOR_BLANK; // reset p2 display area
+        
+        for (i=0; i<w1.q; i++) board.d[ROW-1-i][COL-1] = COLOR_1;
+        for (i=0; i<x1.q; i++) board.d[ROW-1-i][COL-2] = COLOR_2;
+        for (i=0; i<y1.q; i++) board.d[ROW-1-i][COL-3] = COLOR_3;
+        for (i=0; i<z1.q; i++) board.d[ROW-1-i][COL-4] = COLOR_4;
+        
+        for (i=0; i<w2.q; i++) board.d[3][i] = COLOR_1;
+        for (i=0; i<x2.q; i++) board.d[2][i] = COLOR_2;
+        for (i=0; i<y2.q; i++) board.d[1][i] = COLOR_3;
+        for (i=0; i<z2.q; i++) board.d[0][i] = COLOR_4;
+        
+        if (p1_detector.out) {
+          if (p1_button[3]) w1.d = w1.q == 0 ? 4 : w1.q - 1;
+          if (p1_button[2]) x1.d = x1.q == 0 ? 4 : x1.q - 1;
+          if (p1_button[1]) y1.d = y1.q == 0 ? 4 : y1.q - 1;
+          if (p1_button[0]) z1.d = z1.q == 0 ? 4 : z1.q - 1;
+        }
+        
+        if (p2_detector.out) {
+          if (p2_button[3]) w2.d = w2.q == 0 ? 4 : w2.q - 1;
+          if (p2_button[2]) x2.d = x2.q == 0 ? 4 : x2.q - 1;
+          if (p2_button[1]) y2.d = y2.q == 0 ? 4 : y2.q - 1;
+          if (p2_button[0]) z2.d = z2.q == 0 ? 4 : z2.q - 1;
+        }
+        
+        if (w1.q == 0 && x1.q == 0 && y1.q == 0 && z1.q == 0) state.d = state.P1_WIN;
+        if (w2.q == 0 && x2.q == 0 && y2.q == 0 && z2.q == 0) state.d = state.P2_WIN;
+      state.P1_WIN:
+        state.d = state._PRE_END_STAGE;
+        if (p1_score.q == 3) state.d = state.P1_GAME;
+        p1_score.d = p1_score.q + 1;
+      state.P2_WIN:
+        state.d = state.PRE_END_STAGE;
+        if (p2_score.q == 3) state.d = state.P2_GAME;
+        p2_score.d = p2_score.q + 1;
+      state.PRE_END_STAGE:
+        counter.d = 0;
+        for (r=4; r<ROW; r++) for (c=4; c<COL; c++) board.d[r][c] = COLOR_BLANK; // reset p1 display area
+        for (r=0; r<4; r++) for (c=0; c<4; c++) board.d[r][c] = COLOR_BLANK; // reset p2 display area
+        state.d = state.END_STAGE;
+      state.END_STAGE:
+        for (i=0; i<p1_score.q; i++) board.d[ROW-1][3-i] = P1_COLOR;
+        for (i=0; i<p2_score.q; i++) board.d[4+i][0] = P2_COLOR;
+        if (counter.q == 25h1ffffff) state.d = state.INIT_STAGE;
+      state.P1_GAME:
+        for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = P1_COLOR;
+        if (replay) state.d = state.INIT;
+      state.P2_GAME:
+        for (r=0; r<ROW; r++) for (c=0; c<COL; c++) board.d[r][c] = P2_COLOR;
+        if (replay) state.d = state.INIT;
+    }
+  }
+}

@@ -1,0 +1,185 @@
+module fancy_manager #(ROW=8, COL=8)(
+    input clk,  // clock
+    input rst,  // reset
+    input start,
+    input col_button[COL],
+    input conway_static_en,
+    output out[ROW][COL][3]
+  ) {
+  
+  pn_gen pn_gen(.clk(clk), .rst(rst));
+  
+  button_conditioner state_toggle_cond(.clk(clk));  
+  edge_detector state_toggle_detector(.clk(clk), #RISE(1), #FALL(0));
+
+  fsm state(.clk(clk), .rst(rst)) = {STATIC, SCROLL, SQUARE, CONWAY_INIT_TOP, CONWAY_INIT_BTM, CONWAY, CONWAY_STATIC_INIT_TOP, CONWAY_STATIC_INIT_BTM, CONWAY_STATIC};
+  dff clock_counter[24](.clk(clk), .rst(rst));
+  dff seven_counter[3](.clk(clk), .rst(rst));
+  sig static[ROW][COL][3];
+  sig scroll[ROW][COL][3];
+  sig square[ROW][COL][3];
+  
+  const CONWAY_LIVE = 3d3;
+  const CONWAY_DEAD = 3d7;
+  dff conway[ROW][COL][3](.clk(clk), .rst(rst));
+  sig conway_temp[ROW][COL];
+  
+  var r, c, temp;
+
+  always {
+    if (start) state.d = state.STATIC;
+    // ========== PN_GEN ==========
+    pn_gen.seed = 0;
+    pn_gen.next = 1;
+    // ========== BTNCON ==========
+    state_toggle_cond.in = |col_button[7:3];
+    state_toggle_detector.in = state_toggle_cond.out;
+    
+    // ========== COUNTS ==========
+    clock_counter.d = clock_counter.q + 1;
+    if (clock_counter.q[22:0] == 23h7fffff) seven_counter.d = seven_counter.q+1 - ((seven_counter.q+1)/7*7); // cycle of 7
+    
+    // ========== STATIC ==========
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++ ) {
+        temp = r + c;
+        static[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== SCROLL ==========
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++) {
+        temp = static[r][c] + seven_counter.q;
+        scroll[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== SQUARE ==========
+    square = {
+      {3d3,3d3,3d3,3d3,3d3,3d3,3d3,3d3},
+      {3d3,3d2,3d2,3d2,3d2,3d2,3d2,3d3},
+      {3d3,3d2,3d1,3d1,3d1,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d0,3d0,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d0,3d0,3d1,3d2,3d3},
+      {3d3,3d2,3d1,3d1,3d1,3d1,3d2,3d3},
+      {3d3,3d2,3d2,3d2,3d2,3d2,3d2,3d3},
+      {3d3,3d3,3d3,3d3,3d3,3d3,3d3,3d3}
+    };
+    for (r=0; r<ROW; r++) {
+      for (c=0; c<COL; c++ ) {
+        temp = square[r][c] + seven_counter.q;
+        square[r][c] = temp - (temp/7*7);
+      }
+    }
+    
+    // ========== CONWAY ==========
+    if (state.q == state.CONWAY_INIT_TOP) {
+      for (r=0; r<ROW/2; r++) conway_temp[r] = pn_gen.num[(r*COL)+:COL]; // grab slices of 8 and put them into conway_temp
+      for (r=0; r<ROW/2; r++) for (c=0; c<COL; c++) conway.d[r][c] = conway_temp[r][c] ? CONWAY_LIVE : CONWAY_DEAD; // 0 - black, 1 - green
+      for (r=ROW/2; r<ROW; r++) for (c=0; c<COL;c ++) conway.d[r][c] = CONWAY_DEAD;
+      state.d = state.CONWAY_INIT_BTM;
+    }
+    else if (state.q == state.CONWAY_INIT_BTM) {
+      for (r=0; r<ROW/2; r++) conway_temp[r] = pn_gen.num[(r*COL)+:COL];
+      for (r=0; r<ROW/2; r++) for (c=0; c<COL; c++) conway.d[r][c] = (conway_temp[r][c] & (conway.q[r][c] == CONWAY_LIVE)) ? CONWAY_LIVE : CONWAY_DEAD;
+      state.d = state.CONWAY;
+    }
+    else if (state.q == state.CONWAY) {
+      if (clock_counter.q == 24hffffff) {
+        for (r=0; r<ROW; r++) {
+          for (c=0; c<COL; c++) {
+            temp = 0;
+            
+            // count neighbours
+            if (r > 0) {
+              temp = temp + (conway.q[r-1][c] != CONWAY_DEAD); // top
+              if (c != 0) temp = temp + (conway.q[r-1][c-1] != CONWAY_DEAD); // top-left
+              if (c != COL-1) temp = temp + (conway.q[r-1][c+1] != CONWAY_DEAD); // top-right
+            }
+            if (r < ROW-1) {
+              temp = temp + (conway.q[r+1][c] != CONWAY_DEAD); // btm
+              if (c != 0) temp = temp + (conway.q[r+1][c-1] != CONWAY_DEAD); // btm-left
+              if (c != COL-1) temp = temp + (conway.q[r+1][c+1] != CONWAY_DEAD); // btm-right
+            }
+            if (c > 0) temp = temp + (conway.q[r][c-1] != CONWAY_DEAD); // left
+            if (c < COL-1) temp = temp + (conway.q[r][c+1] != CONWAY_DEAD); // right
+            
+            // determine living factor
+            if (conway.q[r][c] != CONWAY_DEAD) { // if alive
+              if (temp < 2) conway.d[r][c] = CONWAY_DEAD; // underpopulation
+              else if (temp > 3) conway.d[r][c] = CONWAY_DEAD; // overpopulation
+              else conway.d[r][c] = seven_counter.q;
+            }
+            else if (temp == 3) conway.d[r][c] = seven_counter.q; // dead + 3 neighbours
+          }
+        }
+      }
+    }
+    
+    // ========== CONWAY_STATIC ==========
+    if (state.q == state.CONWAY_STATIC_INIT_TOP) {
+      for (r=0; r<ROW/2; r++) conway_temp[r] = pn_gen.num[(r*COL)+:COL]; // grab slices of 8 and put them into conway_temp
+      for (r=0; r<ROW/2; r++) for (c=0; c<COL; c++) conway.d[r][c] = conway_temp[r][c] ? CONWAY_LIVE : CONWAY_DEAD; // 0 - black, 1 - green
+      for (r=ROW/2; r<ROW; r++) for (c=0; c<COL;c ++) conway.d[r][c] = CONWAY_DEAD;
+      state.d = state.CONWAY_STATIC_INIT_BTM;
+    }
+    else if (state.q == state.CONWAY_STATIC_INIT_BTM) {
+      for (r=0; r<ROW/2; r++) conway_temp[r] = pn_gen.num[(r*COL)+:COL];
+      for (r=0; r<ROW/2; r++) for (c=0; c<COL; c++) conway.d[r][c] = (conway_temp[r][c] & (conway.q[r][c] == CONWAY_LIVE)) ? CONWAY_LIVE : CONWAY_DEAD;
+      state.d = state.CONWAY_STATIC;
+    }
+    else if (state.q == state.CONWAY_STATIC) {
+      if (conway_static_en) {
+        for (r=0; r<ROW; r++) {
+          for (c=0; c<COL; c++) {
+            temp = 0;
+            
+            // count neighbours
+            if (r > 0) {
+              temp = temp + (conway.q[r-1][c] != CONWAY_DEAD); // top
+              if (c != 0) temp = temp + (conway.q[r-1][c-1] != CONWAY_DEAD); // top-left
+              if (c != COL-1) temp = temp + (conway.q[r-1][c+1] != CONWAY_DEAD); // top-right
+            }
+            if (r < ROW-1) {
+              temp = temp + (conway.q[r+1][c] != CONWAY_DEAD); // btm
+              if (c != 0) temp = temp + (conway.q[r+1][c-1] != CONWAY_DEAD); // btm-left
+              if (c != COL-1) temp = temp + (conway.q[r+1][c+1] != CONWAY_DEAD); // btm-right
+            }
+            if (c > 0) temp = temp + (conway.q[r][c-1] != CONWAY_DEAD); // left
+            if (c < COL-1) temp = temp + (conway.q[r][c+1] != CONWAY_DEAD); // right
+            
+            // determine living factor
+            if (conway.q[r][c] != CONWAY_DEAD) { // if alive
+              if (temp < 2) conway.d[r][c] = CONWAY_DEAD; // underpopulation
+              else if (temp > 3) conway.d[r][c] = CONWAY_DEAD; // overpopulation
+              else conway.d[r][c] = seven_counter.q;
+            }
+            else if (temp == 3) conway.d[r][c] = seven_counter.q; // dead + 3 neighbours
+          }
+        }
+      }
+    }
+    
+    // ========= STATES ==========
+    if (state_toggle_detector.out) {
+      if (col_button[7]) state.d = state.STATIC;
+      if (col_button[6]) state.d = state.SCROLL;
+      if (col_button[5]) state.d = state.SQUARE;
+      if (col_button[4]) state.d = state.CONWAY_INIT_TOP;
+      if (col_button[3]) state.d = state.CONWAY_STATIC_INIT_TOP;
+      clock_counter.d = 0; // reset clock counter when change of state
+      seven_counter.d = 0; // reset seven counter too
+    }
+    
+    // ========== OUTPUT ==========
+    case (state.q) {
+      state.STATIC: out = static;
+      state.SCROLL: out = scroll;
+      state.SQUARE: out = square;
+      state.CONWAY: out = conway.q;
+      state.CONWAY_STATIC: out = conway.q;
+      default: out = static;
+    }
+  }
+}

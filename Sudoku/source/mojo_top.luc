@@ -1,19 +1,6 @@
 module mojo_top #(ROW=8, COL=8)(
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
-    output led [8],         // 8 user controllable LEDs
-    //input cclk,             // configuration clock, AVR ready when high
-    output spi_miso,        // AVR SPI MISO
-    //input spi_ss,           // AVR SPI Slave Select
-    //input spi_mosi,         // AVR SPI MOSI
-    //input spi_sck,          // AVR SPI Clock
-    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-    //input avr_tx,           // AVR TX (FPGA RX)
-    output avr_rx,          // AVR RX (FPGA TX)
-    //input avr_rx_busy,      // AVR RX buffer full
-    //input io_dip [3][8],    // DIP switches on IO Shield
-    //input io_button[5],
-    
     input col_button[8],
     input row_button[8],
     input toggle_button,
@@ -23,10 +10,9 @@ module mojo_top #(ROW=8, COL=8)(
   ) {
   
   sig rst;                  // reset signal
-  fsm state(.clk(clk), .rst(rst)) = {GET_PRNG, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE};
+  fsm state(.clk(clk), .rst(rst), #INIT(SELECT_DIFFICULTY)) = {GET_DIFFICULTY, SELECT_DIFFICULTY, INIT_BOARD, WAIT, ROW_SELECTED, COL_SELECTED, BOTH_SELECTED, NO_TOGGLE, CHECK, WRONG, DONE, FANCY, GRADIENT, BISBAS, TAPTAP};
   dff no_toggle_counter[24](.clk(clk), .rst(rst)); // counter for flashing display when toggle is disabled
   dff wrong_counter[25](.clk(clk), .rst(rst)); // counter for flashing display when wrong answer is given
-  board_generator gen(#ROW(ROW), #COL(COL));
   var i;
   
   .clk(clk) {
@@ -45,38 +31,38 @@ module mojo_top #(ROW=8, COL=8)(
     edge_detector col_detector(#RISE(1), #FALL(0));
     
     .rst(rst) {
-      prng prng;
+      board_generator gen(#ROW(ROW), #COL(COL));
       board_manager board_mgr(#ROW(ROW), #COL(COL));
       mask_manager mask_mgr(#ROW(ROW), #COL(COL));
       select_manager select_mgr;
       board_checker chkr(#ROW(ROW), #COL(COL));
       display display(#ROW(ROW), #COL(COL));
+      
+      display_gradient display_gradient(#ROW(ROW));
+      fancy_display fancy_display(#ROW(ROW), #COL(COL));
+      fancy_manager fancy_mgr(#ROW(ROW), #COL(COL));
+      fancy_bisbas bisbas(#ROW(ROW), #COL(COL));
+      fancy_taptap taptap(#ROW(ROW), #COL(COL));
     }
   }
   
   always {
-    reset_cond.in = ~rst_n;   // input raw inverted reset signal
-    rst = reset_cond.out;     // conditioned reset
     // initializing button conditioners
-    //toggle_cond.in = io_button[1];
-    //check_cond.in = io_button[4];
-    //row_cond.in = |io_dip[0];
-    //col_cond.in = |io_dip[1];
-    toggle_cond.in = toggle_button;
-    check_cond.in = check_button;
     row_cond.in = |row_button;
     col_cond.in = |col_button;
-    // reset_cond.in = reset_button;
+    toggle_cond.in = toggle_button;
+    check_cond.in = check_button;
+    reset_cond.in = reset_button;
     // initializing edge detectors
-    toggle_detector.in = toggle_cond.out;
-    check_detector.in = check_cond.out;
     row_detector.in = row_cond.out;
     col_detector.in = col_cond.out;
-    // seeding prng
-    //prng.seed = io_dip[2];
-    prng.seed = 0;
-    // const value for board_generator
-    gen.n = prng.value[1:0];
+    toggle_detector.in = toggle_cond.out;
+    check_detector.in = check_cond.out;
+    rst = reset_cond.out;
+    // default variables for board_generator
+    gen.en = 0;
+    gen.increase_difficulty = 0;
+    gen.n = 2b0;
     // default variables for board_manager
     board_mgr.write = 0;
     board_mgr.toggle = 0;
@@ -98,17 +84,42 @@ module mojo_top #(ROW=8, COL=8)(
     // const variables for display
     display.data = board_mgr.out;
     display.mask = mask_mgr.out;
+    display.init = gen.init;
     led_strip = display.out;
+    // default variables for fancy
+    bisbas.start = 0;
+    bisbas.p1_button = col_button[7:4];
+    bisbas.p2_button = row_button[3:0];
+    bisbas.replay = toggle_detector.out;
+    taptap.start = 0;
+    taptap.buttons = col_button;
+    fancy_mgr.start = 0;
+    fancy_mgr.col_button = col_button;
+    fancy_mgr.conway_static_en = toggle_detector.out;
+    fancy_display.data = fancy_mgr.out;
     
     case (state.q) {
-      state.GET_PRNG:
-        // wait for prng to complete its calculations
-        if (prng.read_enable) state.d = state.INIT_BOARD;
+      state.GET_DIFFICULTY:
+        display.data = gen.select_difficulty;
+        display.init = gen.no_toggle; // set to all ones so that it would be the bright version
+        if (|col_button) {
+          gen.en = 1;
+          state.d = state.INIT_BOARD;
+        }
+        if (col_button[6] || col_button[7]) gen.n = 2d0;
+        else if (col_button[4] || col_button[5]) gen.n = 2d1;
+        else if (col_button[2] || col_button[3]) gen.n = 2d2;
+        else if (col_button[0] || col_button[1]) gen.n = 2d3;
+      state.SELECT_DIFFICULTY:
+        display.data = gen.difficulty_board;
+        display.init = gen.no_toggle;
+        if (check_detector.out) gen.increase_difficulty = 1;
+        if (toggle_detector.out) state.d = state.INIT_BOARD;
       state.INIT_BOARD:
         // writes initial board to the manager
         board_mgr.write = 1;
         board_mgr.data = gen.init;
-        state.d = state.WAIT;
+        if (!(|col_button)) state.d = state.WAIT; // wait for button release
       state.WAIT:
         mask_mgr.write_state = 2b00;
         
@@ -123,8 +134,9 @@ module mojo_top #(ROW=8, COL=8)(
           select_mgr.write_col = 1;
           state.d = state.COL_SELECTED;
         }
-        // for led testing
-        if (reset_button) state.d = state.DONE;
+        // SNEAKY
+        if (~rst_n) state.d = state.DONE;
+        if (toggle_cond.out && check_cond.out) state.d = state.DONE;
       state.ROW_SELECTED:
         mask_mgr.write_state = 2b01;
         mask_mgr.row = select_mgr.row_out;
@@ -186,6 +198,7 @@ module mojo_top #(ROW=8, COL=8)(
               else {
                 select_mgr.row_in = i;
                 select_mgr.write_row = 1;
+                state.d = state.ROW_SELECTED;
               }
             }
         }
@@ -196,6 +209,7 @@ module mojo_top #(ROW=8, COL=8)(
               else {
                 select_mgr.col_in = i;
                 select_mgr.write_col = 1;
+                state.d = state.COL_SELECTED;
               }
             }
         }
@@ -209,14 +223,38 @@ module mojo_top #(ROW=8, COL=8)(
         wrong_counter.d = wrong_counter.q + 1;
         if (wrong_counter.q == 25h1ffffff) state.d = state.WAIT;
         display.data = wrong_counter.q[23] ? gen.empty : gen.wrong;
+        display.init = gen.no_toggle; // again set to all ones for bright version
       state.DONE:
-        display.data = gen.no_toggle;
-        display.mask = gen.mask;
+        fancy_mgr.start = 1; // reset fancy manager to static display before displaying
+        state.d = state.FANCY;
+      state.FANCY:
+        led_strip = fancy_display.out;
+        if (check_detector.out) {
+          state.d = state.BISBAS;
+          bisbas.start = 1;
+        }
+        if (col_detector.out && col_button[7]) state.d = state.GRADIENT;
+      state.GRADIENT:
+        led_strip = display_gradient.out;
+        if (check_detector.out) {
+          state.d = state.BISBAS;
+          bisbas.start = 1;
+        }
+        if (col_detector.out && |col_button[7:3]) state.d = state.DONE;
+      state.BISBAS:
+        fancy_display.data = bisbas.out;
+        led_strip = fancy_display.out;
+        if (check_detector.out) {
+          state.d = state.TAPTAP;
+          taptap.start = 1;
+        }
+      state.TAPTAP:
+        fancy_display.data = taptap.out;
+        led_strip = fancy_display.out;
+        if (check_detector.out) {
+          state.d = state.BISBAS;
+          bisbas.start = 1;
+        }
     }
-    
-    led = 8h00;               // turn LEDs off
-    spi_miso = bz;            // not using SPI
-    spi_channel = bzzzz;      // not using flags
-    avr_rx = bz;              // not using serial port
   }    
 }
