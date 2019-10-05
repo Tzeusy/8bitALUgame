@@ -8,7 +8,7 @@
 Following these three constraints yields a single unique solution per puzzle.
 
 ## About
-The binary sudoku was build using the Mojo FPGA development board as part of a game design project spanning 8 weeks. Addressable LED strips were used as a user interface, with two colours: red and green. Each LED is covered with frosted acrylic, creating a diffused light effect.
+The binary sudoku was built using the Mojo FPGA development board as part of a game design project spanning 8 weeks. Addressable LED strips were used as a user interface, with two colours: red and green. Each LED is covered with frosted acrylic, creating a diffused light effect.
 
 <div align="center">
     <img src="./images/game.jpg" alt="Sample puzzle" width="300">
